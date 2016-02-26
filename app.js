@@ -16,6 +16,7 @@ var notices = require('./routes/notices');
 var faqs = require('./routes/faqs');
 var accessterms = require('./routes/accessterms');
 var policies = require('./routes/policies');
+var bell = require('./routes/bell');
 
 //Green Space 라우팅 모듈 로딩
 var greenspace = require('./routes/greenspace');
@@ -84,6 +85,8 @@ app.use('/members', members);
 app.use('/orders', orders);
 app.use('/receipt', receipt);
 app.use('/photos', photo);
+app.use('heartbells/me', bell);
+
 app.use('/multimedias', multimedia);
 
 app.use('/mystories', mystory);
