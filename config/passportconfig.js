@@ -27,7 +27,8 @@ module.exports = function(passport) {
                         var user = {
                             "id" : results[0].id,
                             "username" : results[0].username,
-                            "name" : results[0].name
+                            "name" : results[0].name,
+                            "nickname" : results[0].nickname
                         };
                         done(null, user);
                     }
@@ -70,7 +71,8 @@ module.exports = function(passport) {
                             } else {
                                 var user = {
                                     "id" : result.insertId,
-                                    "gName" : profile.displayName,
+                                    "email" : profile.emails[0],
+                                    "name" : profile.displayName,
                                     "nickname" : profile.displayName
                                 }
 
@@ -83,7 +85,8 @@ module.exports = function(passport) {
                             var user = {
                                 "id" : results[0].id,
                                 "email" : results[0].email,
-                                "name" : results[0].name
+                                "name" : results[0].name,
+                                "nickname" : results[0].nickname
                             }
                             callback(null, user);
                         } else {
@@ -100,7 +103,8 @@ module.exports = function(passport) {
                                     var user = {
                                         "id" : results[0].id,
                                         "email" : profile.emails[0],
-                                        "name" : profile.displayName
+                                        "name" : profile.displayName,
+                                        "nickname" : results[0].nickname
                                     }
                                 }
                             });

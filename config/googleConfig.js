@@ -1,5 +1,5 @@
 module.exports = {
-    "facebok" : {
+    "google" : {
         "appId" : "",
         "appSecret" : "",
         "apiVersion" : "",
