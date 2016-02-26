@@ -27,14 +27,29 @@ router.get('/', function(req, res, next){
             "WHERE board_id = ? " +
             "LIMIT ? OFFSET ?";
         var notices_num = 1;
-
         connection.query(sql, [notices_num, limit, offset], function(err,results){
             connection.release();
             if(err){
                 callback(err);
             } else {
                 if(results.length){
-                    callback(null, results);
+                    var list = [];
+                    async.each(results, function(element, callback){
+                        list.push({
+                            "id" : element.id,
+                            "type" : element.board_id,
+                            "title" : element.title,
+                            "date" : element.wdatetime,
+                            "body" : element.body
+                        });
+                        callback(null);
+                    }, function(err, result){
+                        if(err) {
+                            callback(err);
+                        } else {
+                            callback(null, list);
+                        }
+                    });
                 } else {
                     callback(err);
                 }
@@ -51,22 +66,11 @@ router.get('/', function(req, res, next){
             }
             next(err);
         } else {
-            var list = [];
-            for(var i=0;i<result.length;i++){
-                list.push({
-                    "id" : result[i].id,
-                    "type" : result[i].board_id,
-                    "title" : result[i].title,
-                    "date" : result[i].wdatetime,
-                    "body" : result[i].body
-                });
-            }
-
             res.json({
                 "result" : {
                     "page" : page,
                     "listPerPage" : limit,
-                    "list" : list
+                    "list" : result
                 }
             });
         }

@@ -1,22 +1,79 @@
 var express = require('express');
 var router = express.Router();
+var url = require('url');
+var queryString = require('querystring');
+var async = require('async');
 
 router.get('/', function(req, res, next){
-    res.json({
-        "result" : {
-            "page" : 1,
-            "itemsPerPage" : 10,
-            "cartUrl" : "/members/me/baskets",
-            "orderUrl" : "/orders",
-            "items" : [{
-                "id" : 1,
-                "name" : "기저귀",
-                "picture" : "/photos/xxxxxxxxx.jpg",
-                "star" : 13,
-                "price" : 200,
-                "itemCount" : 10,
-                "itemDescription" : "잘 안 찢어져요"
-            }]
+    var urlObj = url.parse(req.url).query;
+    var urlQuery = queryString.parse(urlObj);
+    var page = urlQuery.page;
+    var limit = 10;
+    var offset = (page - 1) * 10;
+
+    function getConnection(callback){
+        pool.getConnection(function(err, connection){
+            if(err){
+                callback(err);
+            } else {
+                callback(null, connection);
+            }
+        });
+    }
+
+    function selectItems(connection, callback){
+        var sql = "SELECT id, name, picture, star, price, tquantity, description " +
+                  "from greenitems " +
+                  "limit ? offset ?";
+        connection.query(sql, [limit, offset], function(err,results){
+            connection.release();
+            if(err){
+                callback(err);
+            } else {
+                if(results.length){
+                    var list = [];
+                    async.each(results, function(element, callback) {
+                        list.push({
+                            "id" : element.id,
+                            "name": element.name,
+                            "picture": element.picture,
+                            "star" : element.star,
+                            "price": element.price,
+                            "itemCount": element.tquantity,
+                            "itemDescription": element.description
+                        });
+                        callback(null);
+                    }, function(err, result) {
+                        if(err) {
+                            callback(err);
+                        } else {
+                            callback(null, list);
+                        }
+                    });
+                } else {
+                    callback(err);
+                }
+            }
+        });
+    }
+
+    async.waterfall([getConnection, selectItems], function(err, result){
+        if(err){
+            var err = {
+                "code" : "err014",
+                "message" : "GREEN SHOP의 물건들을 불러올 수 없습니다."
+            }
+            next(err);
+        } else {
+            res.json({
+                "result" : {
+                    "page" : page,
+                    "listPerPage" : limit,
+                    "cartUrl" : "/member/me/baskets",
+                    "orderUrl" : "/orders",
+                    "items" : result
+                }
+            });
         }
     });
 });
