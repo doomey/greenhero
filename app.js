@@ -61,8 +61,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session({
-  //"secret" : process.env.GREEN_SERVER_KEY,
-  "secret" : "8/ETEX3IKHEWqcTzFNxzjte3UlelHroD4yrYHk0kR8U=", //cmd > openssl rand -base64 32 명령으로 생성한 임의값
+  "secret" : process.env.GREEN_SERVER_KEY,
+  //"secret" : "8/ETEX3IKHEWqcTzFNxzjte3UlelHroD4yrYHk0kR8U=", //cmd > openssl rand -base64 32 명령으로 생성한 임의값
   //원래 secret은 process.env.server_key 이런 식으로 OS 환경변수에 넣어 사용하고 키값을 직접 적지는 않는다.
   "cookie" : {"maxAge" : 86400000}, // 1000ms * 60초 * 60분 * 24시간. 하루동안 세션을 유지하겠다.
   "resave" : true,
