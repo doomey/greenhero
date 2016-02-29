@@ -127,7 +127,7 @@ module.exports = function(passport) {
         passwordField: "password",
         passReqToCallback: true
     }, function(req, username, password, done) {
-        console.log('로컬로그인');
+
         //1. getConnection
         function getConnection(callback) {
             pool.getConnection(function(err, connection) {
@@ -154,13 +154,14 @@ module.exports = function(passport) {
                     } else {
                         var user = {
                             "id" : results[0].id,
-                            "hashPassword" : results[0].password,
+                            "hashPassword" : results[0].hashpassword,
                             "email" : results[0].google_email,
                             "name" : results[0].google_name,
                             "nickname" : results[0].nickname
-                        }
+                        };
+                        console.log('유저', user);
+                        callback(null, user);
                     }
-                    callback(null, user)
                 }
             });
         }
