@@ -1,7 +1,18 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
-router.get('/', function(req, res, next) {
+
+function isLoggedIn(req, res, next) {
+    if(!req.isAutenticated()) {
+        var err = new Error('로그인이 필요합니다...');
+        err. status = 401;
+        next(err);
+    } else {
+        next(null, {"message" : "로그인이 완료되었습니다..."});
+    }
+}
+
+router.get('/', isLoggedIn, function(req, res, next) {
     if(req.secure) {
         var page = parseInt(req.query.page);
         page = isNaN(page)? 1 : page;
@@ -27,7 +38,7 @@ router.get('/', function(req, res, next) {
                          "from greendb.orders o join greendb.orderdetails od on (o.id = od.order_id) "+
                          "join greendb.greenitems g on (od.greenitems_id = g.id) "+
                          "where iparty_id = ? limit ? offset ?";
-            connection.query(select, [1, limit, offset], function(err, results) {
+            connection.query(select, [req.user.id, limit, offset], function(err, results) {
                 connection.release();
                 if(err) {
                     callback(err);

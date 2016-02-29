@@ -4,9 +4,20 @@ var async = require('async');
 var passport = require('passport');
 var gcm = require('node-gcm');
 
-router.post('/', function(req, res, next) {
+function isLoggedIn(req, res, next) {
+    if(!req.isAutenticated()) {
+        var err = new Error('로그인이 필요합니다...');
+        err. status = 401;
+        next(err);
+    } else {
+        next(null, {"message" : "로그인이 완료되었습니다..."});
+    }
+}
+
+router.get('/', passport.authenticate('google-token'),
+    function(req, res, next) {
         if(req.secure) {
-            passport.authenticate('google-token', function(err, user, info) {
+            console.log('members들어옴');
                 if(err) {
                     err.code = "err001";
                     err.message = "연동에 실패하였습니다...";
@@ -24,7 +35,6 @@ router.post('/', function(req, res, next) {
                         }
                     });
                 }
-            });
         } else {
             var err = new Error("SSL/TLS Upgrade Required");
             err.status = 426;
@@ -32,7 +42,7 @@ router.post('/', function(req, res, next) {
         }
     });
 
-router.get('/me', function(req, res, next) {
+router.get('/me', isLoggedIn, function(req, res, next) {
     if(req.secure) {
         //오늘 획득 가능한 나뭇잎 양
         var todayleaf = 45;
@@ -55,7 +65,7 @@ router.get('/me', function(req, res, next) {
                           "                                                          from greendb.daddress "+
                           "                                                          where iparty_id = 1)) d "+
                           "                       on (i.id = d.iparty_id)";
-            connection.query(select, [1], function(err, results) {
+            connection.query(select, [req.user.id], function(err, results) {
                 if(err) {
                     connection.release();
                     callback(err);
@@ -85,7 +95,7 @@ router.get('/me', function(req, res, next) {
             var select = "select sum(changedamount) as chdamt "+
                          "from greendb.leafhistory "+
                          "where leaftype = 1 and iparty_id = ? and applydate = date(now())";
-            connection.query(select, [1], function(err, results) {
+            connection.query(select, [req.user.id], function(err, results) {
                 connection.release();
                 if(err) {
                     callback(err);
@@ -112,7 +122,7 @@ router.get('/me', function(req, res, next) {
     }
 });
 
-router.put('/me', function(req, res, next) {
+router.put('/me', isLoggedIn, function(req, res, next) {
     if(req.secure) {
         var nickname = req.body.nickname;
 
@@ -130,7 +140,7 @@ router.put('/me', function(req, res, next) {
             var update = "update greendb.iparty "+
                 "set nickname = ? "+
                 "where id = ?";
-            connection.query(update, [nickname, 1], function(err, result) {
+            connection.query(update, [nickname, req.user.id], function(err, result) {
                 connection.release();
                 if(err) {
                     callback(err);
@@ -160,7 +170,7 @@ router.put('/me', function(req, res, next) {
     }
 });
 
-router.get('/me/leafs', function(req, res, next) {
+router.get('/me/leafs', isLoggedIn, function(req, res, next) {
     if(req.secure) {
         console.log('들어옴');
         var page = parseInt(req.query.page);
@@ -184,7 +194,7 @@ router.get('/me/leafs', function(req, res, next) {
             var select = "select id, applydate, leaftype, changedamount "+
                           "from greendb.leafhistory "+
                           "where iparty_id = ? limit ? offset ?";
-            connection.query(select, [1, limit, offset], function(err, results) {
+            connection.query(select, [req.user.id, limit, offset], function(err, results) {
                 connection.release();
                 if(err) {
                     callback(err);
@@ -230,84 +240,7 @@ router.get('/me/leafs', function(req, res, next) {
     }
 });
 
-router.get('/me/bells', function(req, res, next) {
-    var nickname = req.body.nickname;
-    var msg = req.body.message;
-    var date = req.body.date;
-    var articleId = req.body.articleId;
-    var replyId = req.body.replyId;
-    var userId = req.body.id;
-
-    function getConnection(callback) {
-        pool.getConnection(function(err, connection) {
-            if(err) {
-                callback(err);
-            } else {
-                callback(null, connection);
-            }
-        })
-    }
-
-    function selectIparty(connection, callback) {
-        var select = "select registration_token "+
-                     "from greendb.iparty "+
-                     "where id = ?";
-        connection.querty(select, [1], function(err, results) {
-            connection.release();
-            if(err) {
-                callback(err);
-            } else {
-                callback(null, results[0].registration_token);
-            }
-        });
-    }
-
-    async.waterfall([getConnection, selectIparty], function(err, registraion_token) {
-        if(err) {
-            err.code = "err005";
-            err.message = "알림종을 불러올 수 없습니다."
-            next(err);
-        } else {
-            var server_access_key = 'AIzaSyBaFeq5YGUXdRQmmTLJV2MqmqciZV5AVQk';
-            var sender = new gcm.Sender(server_access_key);
-            var registrationIds = [];
-
-            var registration_id = registraion_token;
-            registrationIds.push(registration_id);
-
-            var message = new gcm.Message({
-                collapseKey: 'demo',
-                delayWhileIdle: true,
-                timeToLive: 3,
-                data : {
-                    who: nickname,
-                    message: msg,
-                    when: date
-                }
-            });
-
-            sender.send(message, registrationIds, 4, function(err, result) {
-                console.log(result);
-            })
-
-            sender.send(message, tokens, function(err, result) {
-                if(err) {
-                    next(err);
-                } else {
-                    result.results.forEach(function(item) {
-                        if(item.message_id) {
-                            console.log('success : '+item.message_id);
-                        } else {
-                            console.log('error : '+item.error);
-                        }
-                    });
-                }
-            });
-        }
-    });
-});
-
-router.get('/me/baskets', function(req, res, next) {
+router.get('/me/baskets', isLoggedIn, function(req, res, next) {
     function getConnection(callback) {
         pool.getConnection(function(err, connection) {
             if(err) {
@@ -323,7 +256,7 @@ router.get('/me/baskets', function(req, res, next) {
                      "FROM greendb.cart c join greendb.greenitems i "+
                      "                    on (c.greenitems_id = i.id) "+
                      "where iparty_id = ?";
-        connection.query(select, [1], function(err, results) {
+        connection.query(select, [req.user.id], function(err, results) {
             if(err) {
                 err.code = "err018";
                 err.message = "장바구니를 사용할 수 없습니다...";
@@ -370,7 +303,7 @@ router.get('/me/baskets', function(req, res, next) {
     });
     });
 
-router.post('/me/baskets', function(req, res, next) {
+router.post('/me/baskets', isLoggedIn, function(req, res, next) {
     var itemId = req.body.itemId;
     var iid = [];
     var quantity = req.body.quantity;
@@ -405,7 +338,7 @@ router.post('/me/baskets', function(req, res, next) {
         async.each(iid, function(element, callback) {
             var insert = "insert into greendb.cart(greenitems_id, iparty_id, quantity) "+
                 "values(?, ?, ?)";
-            connection.query(insert, [element, 1, qt[index]], function(err, result) {
+            connection.query(insert, [element, req.user.id, qt[index]], function(err, result) {
                 if(err) {
                     connection.release();
                     callback(err);
