@@ -1,7 +1,17 @@
 var express = require('express');
 var router = express.Router();
 
-router.post('/', function(req, res, next) {
+function isLoggedIn(req, res, next) {
+    if(!req.isAutenticated()) {
+        var err = new Error('로그인이 필요합니다...');
+        err. status = 401;
+        next(err);
+    } else {
+        next(null, {"message" : "로그인이 완료되었습니다..."});
+    }
+}
+
+router.post('/', isLoggedIn, function(req, res, next) {
     var nickname = req.body.nickname;
     var date = req.body.date;
 
@@ -35,19 +45,21 @@ router.post('/', function(req, res, next) {
             err.message = "알림종을 불러올 수 없습니다.";
             next(err);
         } else {
+            var user = req.user;
+
             var server_access_key = 'AIzaSyBaFeq5YGUXdRQmmTLJV2MqmqciZV5AVQk';
             var sender = new gcm.Sender(server_access_key);
             var registrationIds = [];
             registrationIds.push(registration_token);
 
             var message = new gcm.Message({
-                collapseKey: 'demo',
-                delayWhileIdle: true,
-                timeToLive: 3,
-                data : {
-                    who: nickname,
-                    message: "댓글누른사람닉네임"+"님이 공감하셨습니다!", //user.nickname으로 교체
-                    when: date
+                "collapseKey": 'demo',
+                "delayWhileIdle": true,
+                "timeToLive": 3,
+                "data" : {
+                    "who": nickname,
+                    "message": "댓글누른사람닉네임"+"님이 공감하셨습니다!", //user.nickname으로 교체
+                    "when": date
                 }
             });
 
