@@ -7,7 +7,7 @@ var queryString = require('querystring');
 router.get('/', function(req, res, next){
     var urlObj = url.parse(req.url).query;
     var urlQuery = queryString.parse(urlObj);
-    var page = urlQuery.page;
+    var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
     var limit = 10;
     var offset = (page - 1) * 10;
 
