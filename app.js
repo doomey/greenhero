@@ -5,8 +5,10 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var passport = require('passport');
 
 global.pool = require('./config/dbpool');
+require('./config/passportconfig')(passport); //passport를 configuration
 
 
 
@@ -47,6 +49,10 @@ var mystory = require('./routes/mystory');
 
 var app = express();
 
+//로컬
+var local = require('./routes/local');
+
+
 app.set('env', 'development');
 //app.set('env', 'production');
 
@@ -69,7 +75,8 @@ app.use(session({
   "saveUninitialized" : true
 }));
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(passport.initialize());
+app.use(passport.session());
 // 중요!!! mapping mount point configuration. 마운트 포인트를 구성하면 된다.
 app.use('/', index);
 
@@ -99,6 +106,9 @@ app.use('heartbells/me', bell);
 app.use('/multimedias', multimedia);
 
 app.use('/mystories', mystory);
+
+//로컬
+app.use('/local', local);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

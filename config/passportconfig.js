@@ -1,10 +1,8 @@
-/**
- * Created by skplanet on 2016-02-12.
- */
 var async = require('async');
 var bcrypt = require('bcrypt');
 var GoogleConfig = require('./googleConfig');
-var googleTokenStrategy = require('passport-google-token');
+var GoogleTokenStrategy = require('passport-google-token').Strategy;
+var LocalStrategy = require('passport-local').Strategy;
 
 module.exports = function(passport) {
     passport.serializeUser(function(user, done) {
@@ -37,11 +35,100 @@ module.exports = function(passport) {
         });
     });
 
-    passport.use('google-token', new googleTokenStrategy({
-        "clientID" : googleConfig.google.appID,
-        "cliendSecret" : googleConfig.google.appSecret
-    }, function(accessToken, refreshToken, profile, done) {
+    //passport.use('google-token', new GoogleTokenStrategy({
+    //    "clientID" : GoogleConfig.google.appId,
+    //    "cliendSecret" : GoogleConfig.google.appSecret
+    //}, function(accessToken, refreshToken, profile, done) {
+    //    console.log('google-token들어옴');
+    //    function getConnection(callback) {
+    //        pool.getConnection(function(err, connection) {
+    //            if(err) {
+    //                callback(err);
+    //            } else {
+    //                callback(null, connection);
+    //            }
+    //        })
+    //    }
+    //
+    //    function selectOrCreateUser(connection) {
+    //        var select = "select id, nickname, google_email, google_name, google_photo "+
+    //                      "from greendb.iparty "+
+    //                      "where google_id = ?";
+    //        connection.query(select, [profile.id], function(err, results) {
+    //            if(err) {
+    //                connection.release();
+    //                callback(err);
+    //            } else {
+    //                if(results.length === 0) {
+    //                    var insert = "insert into greendb.iparty(nickname, google_id, google_token, google_email, google_name, totalleaf) "+
+    //                                  "values(?, ?, ?, ?, ?, ?)";
+    //                    connection.query(insert, [profile.displayName, profile.id, accessToken, profile.emails[0], profile.displayName, profile.photos[0]], function(err, result) {
+    //                        connection.release();
+    //                        if(err) {
+    //                            callback(err);
+    //                        } else {
+    //                            var user = {
+    //                                "id" : result.insertId,
+    //                                "email" : profile.emails[0],
+    //                                "name" : profile.displayName,
+    //                                "nickname" : profile.displayName
+    //                            }
+    //
+    //                            callback(null, user);
+    //                        }
+    //                    })
+    //                } else {
+    //                    if(accessToken === google_token || profile.emails[0] === results[0].google_email) {
+    //                        connection.release();
+    //                        var user = {
+    //                            "id" : results[0].id,
+    //                            "email" : results[0].email,
+    //                            "name" : results[0].name,
+    //                            "nickname" : results[0].nickname
+    //                        };
+    //                        callback(null, user);
+    //                    } else {
+    //                        var update = "update greendb.iparty "+
+    //                                      "set google_token = ?, "+
+    //                                      "    google_email = ?, "+
+    //                                      "    google_name = ? "+
+    //                                      "where google_id = ?"
+    //                        connection.query(update, [accessToken, profile.emails[0], profile.displayName], function(err, result) {
+    //                            connection.release();
+    //                            if(err) {
+    //                                callback(err);
+    //                            } else {
+    //                                var user = {
+    //                                    "id" : results[0].id,
+    //                                    "email" : profile.emails[0],
+    //                                    "name" : profile.displayName,
+    //                                    "nickname" : results[0].nickname
+    //                                };
+    //                                callback(null, user);
+    //                            }
+    //                        });
+    //                    }
+    //                }
+    //            }
+    //        });
+    //    }
+    //
+    //    async.waterfall([getConnection, selectOrCreateUser], function(err, user) {
+    //        if(err) {
+    //            done(err);
+    //        } else {
+    //            done(null, user);
+    //        }
+    //    });
+    //}));
 
+    passport.use('local-login', new LocalStrategy({
+        usernameField: "username",
+        passwordField: "password",
+        passReqToCallback: true
+    }, function(req, username, password, done) {
+
+        //1. getConnection
         function getConnection(callback) {
             pool.getConnection(function(err, connection) {
                 if(err) {
@@ -49,75 +136,58 @@ module.exports = function(passport) {
                 } else {
                     callback(null, connection);
                 }
-            })
+            });
         }
-
-        function selectOrCreateUser(connection) {
-            var select = "select id, nickname, google_email, google_name, google_photo "+
-                          "from greendb.iparty "+
-                          "where google_id = ?";
-            connection.query(select, [profile.id], function(err, results) {
+        //2. selectpassword
+        function selectIparty(connection, callback) {
+            var select = "select id, hashpassword, nickname, google_email, google_name "+
+                         "from greendb.iparty "+
+                         "where username = ?";
+            connection.query(select, [username], function(err, results) {
+                connection.release();
                 if(err) {
-                    connection.release();
                     callback(err);
                 } else {
                     if(results.length === 0) {
-                        var insert = "insert into greendb.iparty(nickname, google_id, google_token, google_email, google_name, totalleaf) "+
-                                      "values(?, ?, ?, ?, ?, ?)";
-                        connection.query(insert, [profile.displayName, profile.id, accessToken, profile.emails[0], profile.displayName, profile.photos[0]], function(err, result) {
-                            connection.release();
-                            if(err) {
-                                callback(err);
-                            } else {
-                                var user = {
-                                    "id" : result.insertId,
-                                    "email" : profile.emails[0],
-                                    "name" : profile.displayName,
-                                    "nickname" : profile.displayName
-                                }
-
-                                callback(null, user);
-                            }
-                        })
+                        var err = new Error('사용자가 존재하지 않습니다...');
+                        callback(err);
                     } else {
-                        if(accessToken === google_token || profile.emails[0] === results[0].google_email) {
-                            connection.release();
-                            var user = {
-                                "id" : results[0].id,
-                                "email" : results[0].email,
-                                "name" : results[0].name,
-                                "nickname" : results[0].nickname
-                            }
-                            callback(null, user);
-                        } else {
-                            var update = "update greendb.iparty "+
-                                          "set google_token = ?, "+
-                                          "    google_email = ?, "+
-                                          "    google_name = ? "+
-                                          "where google_id = ?"
-                            connection.query(update, [accessToken, profile.emails[0], profile.displayName], function(err, result) {
-                                connection.release();
-                                if(err) {
-                                    callback(err);
-                                } else {
-                                    var user = {
-                                        "id" : results[0].id,
-                                        "email" : profile.emails[0],
-                                        "name" : profile.displayName,
-                                        "nickname" : results[0].nickname
-                                    }
-                                }
-                            });
-                        }
+                        var user = {
+                            "id" : results[0].id,
+                            "hashPassword" : results[0].hashpassword,
+                            "email" : results[0].google_email,
+                            "name" : results[0].google_name,
+                            "nickname" : results[0].nickname
+                        };
+                        console.log('유저', user);
+                        callback(null, user);
                     }
                 }
             });
         }
 
-        async.waterfall([getConnection, selectOrCreateUser], function(err, user) {
+        //3. compare
+        function compare(user, callback) {
+            bcrypt.compare(password, user.hashPassword, function(err, result) {
+                if(err) {
+                    console.log('여기 됨');
+                    callback(err);
+                } else {
+                    if(result === true) {
+
+                        callback(null, user);
+                    } else {
+                        callback(null, false);
+                    }
+                }
+            })
+        }
+
+        async.waterfall([getConnection, selectIparty, compare], function(err, user) {
             if(err) {
                 done(err);
             } else {
+                delete user.hashPassword;
                 done(null, user);
             }
         });

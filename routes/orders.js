@@ -2,7 +2,17 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 
-router.post('/', function(req, res, next) {
+function isLoggedIn(req, res, next) {
+    if(!req.isAutenticated()) {
+        var err = new Error('로그인이 필요합니다...');
+        err. status = 401;
+        next(err);
+    } else {
+        next(null, {"message" : "로그인이 완료되었습니다..."});
+    }
+}
+
+router.post('/', isLoggedIn, function(req, res, next) {
         if(req.secure) {
             //물건의 id와 수량을 받아옴
             var itemId = req.body.itemId;
@@ -44,7 +54,7 @@ router.post('/', function(req, res, next) {
                 var select = "select google_id, google_name, phone, google_email, totalleaf "+
                              "from greendb.iparty "+
                              "where id = ?";
-                connection.query(select, [1], function(err, results) {
+                connection.query(select, [req.user.id], function(err, results) {
                     if(err) {
                         connection.release();
                         callback(err);
@@ -184,7 +194,7 @@ router.post('/', function(req, res, next) {
                     function insertLeafhistory(message, TP, callback) {
                         var insert = "insert into greendb.leafhistory(applydate, leaftype, changedamount, iparty_id) "+
                                      "values(date(now()), 0, ?, ?)";
-                        connection.query(insert, [TP, 1], function(err, result) {
+                        connection.query(insert, [TP, req.user.id], function(err, result) {
                             if(err) {
                                 callback(err);
                             } else {
@@ -244,7 +254,7 @@ router.post('/setaddress', function(req, res, next) {
         function insertDaddress(connection, callback) {
             var insert = "insert into greendb.daddress(name, receiver, phone, add_phone, ad_code, address, iparty_id) "+
                           "values(?, ?, ?, ?, ?, ?, ?);";
-            connection.query(insert, ["유저이름", name, phone1, phone2, adcode, address, 1], function(err, result) {
+            connection.query(insert, ["유저이름", name, phone1, phone2, adcode, address, req.user.id], function(err, result) {
                connection.release();
                 if(err) {
                    callback(err);
