@@ -3,6 +3,7 @@ var url = require('url');
 var router = express.Router();
 var queryString = require('querystring');
 var async = require('async');
+var passport = require('passport');
 
 function getConnection(callback){
     pool.getConnection(function(err, connection){
@@ -25,14 +26,42 @@ router.get('/', function(req, res, next){
         var sql = "select e.id as eid, e.title, e.cname, e.sdate, e.edate, e.content, " +
                   "f.modifiedfilename as mo, f.filetype as type " +
                   "from epromotion e join files f on (f.refer_id = e.id) and (refer_type = 2) " +
-                  "order by eid, type limit ? offset ?";
+                  "order by eid desc, type limit ? offset ?";
         connection.query(sql, [limit, offset], function(err,results){
             connection.release();
             if(err){
                 callback(err);
             } else {
                 if(results.length){
-                    callback(null, results);
+                    var list=[];
+                    var modifiedList = [];
+                    var index = 0;
+                    async.each(results, function(element, callback){
+                        list.push({
+                            "epId" : element.eid,
+                            "title" : element.title,
+                            "thumbnail" : "/public/photos/" + element.mo,
+                            "epName" : element.cname,
+                            "sDate" : element.sdate,
+                            "eDate" : element.edate,
+                            "content" : element.content,
+                            "file" : "/public/multimedias/" + element.mo
+                        });
+                        if(index%2==1){
+                            list[index-1].file = "/public/photos" + element.mo;
+                            console.log(list[index-1].file);
+                            modifiedList.push(list[index-1]);
+                        }
+                        index++;
+                        callback(null);
+                    }, function(err, result){
+                        index = 0;
+                        if(err) {
+                            callback(err);
+                        } else {
+                            callback(null, modifiedList);
+                        }
+                    });
                 } else {
                     callback(err);
                 }
@@ -48,33 +77,11 @@ router.get('/', function(req, res, next){
             }
             next(err);
         } else {
-            var list = [];
-            var modifiedList = [];
-            for(var i=0;i<result.length;i++){
-                    list.push({
-                        "epId" : result[i].eid,
-                        "title" : result[i].title,
-                        "thumbnail" : "/public/photos/" + result[i].mo,
-                        "epName" : result[i].cname,
-                        "sDate" : result[i].sdate,
-                        "eDate" : result[i].edate,
-                        "content" : result[i].content,
-                        "file" : "/public/multimedias/" + result[i].mo
-                    });
-            }
-
-            for(var i=0;i<result.length;i++) {
-                if(i%2==1){
-                    list[i-1].file = "/public/photos/" + result[i].mo;
-                    modifiedList.push(list[i-1]);
-                }
-            }
-
             res.json({
                 "result" : {
                     "page" : page,
                     "listPerPage" : limit,
-                    "list" : modifiedList
+                    "list" : result
                 }
             });
         }
@@ -207,20 +214,24 @@ router.post('/', function(req, res, next){
         async.waterfall([getConnection, leafTransaction], function (err, results) {
             if(err){
                 var err = {
-                    "code" : "err014",
-                    "message" : "시청 완료 메시지가 들어오지 않았습니다."
+                    "code" : "err014-1",
+                    "message" : "메시지는 전송받았으나 나뭇잎 적립 도중 오류가 발생했습니다."
                 }
                 next(err);
             } else {
                 res.json({
                     "result" : {
-                        "message" : "시청 완료 메시지가 들어왔습니다. 나뭇잎 적립 절차를 진행합니다."
+                        "message" : "시청 완료 메시지가 정상적으로 들어와서 나뭇잎을 적립했습니다."
                     }
                 });
             }
         });
     } else {
-        console.log('실패 : ' + watch);
+        var err = {
+            "code" : "err014",
+            "message" : "시청 완료 메시지가 정상적으로 전송되지 않았으니 확인해 주세요."
+        }
+        next(err);
     }
 });
 

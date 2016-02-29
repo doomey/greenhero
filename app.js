@@ -8,27 +8,35 @@ var session = require('express-session');
 
 global.pool = require('./config/dbpool');
 
+
+
+var accessterms = require('./routes/accessterms');
+var bell = require('./routes/bell');
+var faqs = require('./routes/faqs');
+var greenplayer = require('./routes/greenplayer');
+var greenspace = require('./routes/greenspace');
 // 중요!!! Loading router-level middleware modules 라우터 레벨 미들웨어 모듈을 로딩한다.
 var index = require('./routes/index');
 
-//공지사항, FAQ, 이용약관, 운영정책 라우팅 모듈 로딩
+
+
 var notices = require('./routes/notices');
-var faqs = require('./routes/faqs');
-var accessterms = require('./routes/accessterms');
+
+
 var policies = require('./routes/policies');
-var bell = require('./routes/bell');
+
 
 //Green Space 라우팅 모듈 로딩
-var greenspace = require('./routes/greenspace');
+
 
 //greep Player 라우팅 모듈 로딩
-var greenplayer = require('./routes/greenplayer');
+
 
 //items 라우팅 모듈 로딩
 var items = require('./routes/items');
 
 //members 라우팅 모듈 로딩
-var members = require('./routes/members');
+var members = require('./routes/member');
 
 var orders = require('./routes/orders');
 var receipt = require('./routes/receipt');
@@ -53,7 +61,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(session({
-  "secret" : "8/ETEX3IKHEWqcTzFNxzjte3UlelHroD4yrYHk0kR8U=", //cmd > openssl rand -base64 32 명령으로 생성한 임의값
+  "secret" : process.env.GREEN_SERVER_KEY,
+  //"secret" : "8/ETEX3IKHEWqcTzFNxzjte3UlelHroD4yrYHk0kR8U=", //cmd > openssl rand -base64 32 명령으로 생성한 임의값
   //원래 secret은 process.env.server_key 이런 식으로 OS 환경변수에 넣어 사용하고 키값을 직접 적지는 않는다.
   "cookie" : {"maxAge" : 86400000}, // 1000ms * 60초 * 60분 * 24시간. 하루동안 세션을 유지하겠다.
   "resave" : true,
