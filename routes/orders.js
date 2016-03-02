@@ -51,7 +51,6 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
 
             function selectIparty(connection, callback) {
-                console.log('유저아이디', req.session.userId, req.user.id);
                 var select = "select google_id as gid, google_name as gname, phone, google_email as gmail, totalleaf "+
                              "from greendb.iparty "+
                              "where id = ?";
@@ -266,7 +265,6 @@ router.post('/setaddress', function(req, res, next) {
                             "message" : "주소가 등록되었습니다."
                         }
                     };
-                   console.log('유저이름', req.user.name);
                     callback(null, message);
                 }
             });
