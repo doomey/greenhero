@@ -5,7 +5,7 @@ var queryString = require('querystring');
 var async = require('async');
 var passport = require('passport');
 
-function isLoggedIn(req, res, next) {
+function isLoggedIn(req, res, next) {//
     if(!req.isAuthenticated()) {
         var err = new Error('로그인이 필요합니다...');
         err. status = 401;
