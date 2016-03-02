@@ -14,7 +14,7 @@ module.exports = function(passport) {
             if(err) {
                 done(err);
             } else {
-                var sql = "select id, username, name, google_id, google_username, google_email, google_name, google_photo "+
+                var sql = "select id, username, name, google_id, google_name, google_email, google_name "+
                           "from iparty " +
                           "where id = ?";
                 connection.query(sql, [id], function(err, results) {

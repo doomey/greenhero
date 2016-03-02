@@ -14,6 +14,16 @@ function  getConnection (callback) {
     });
 }
 
+function isLoggedIn(req, res, next) {
+    if(!req.isAuthenticated()) {
+        var err = new Error('로그인이 필요합니다...');
+        err. status = 401;
+        next(err);
+    } else {
+        next(null, {"message" : "로그인이 완료되었습니다..."});
+    }
+}
+
 
 
 router.get('/', function(req, res, next) {
@@ -174,10 +184,10 @@ router.get('/:ediaryId/replies', function(req, res, next) {
 });
 
 
-router.post('/:ediaryId/replies', function(req, res, next) {
-    var ediary_id = req.params.ediaryId;
+router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
+    var ediary_id = parseInt(req.params.ediaryId);
     var body = req.body.replyBody;
-    var iparty_id = parseInt(req.body.ipartyId);
+    var iparty_id = parseInt(req.user.id);
     var tLeaf = 0;
     var userLeaf = 0;
     var replyId = 0;

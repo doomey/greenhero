@@ -14,11 +14,13 @@ router.post('/login', function(req, res, next) {
             err.status = 401;
             next(err);
          } else {
-            if(err) {
-               next(err);
-            } else {
-               res.json(user);
-            }
+            req.logIn(user, function(err) {
+               if(err) {
+                  next(err);
+               } else {
+                  res.json(user);
+               }
+            });
          }
       })(req, res, next);
    } else {
@@ -29,7 +31,9 @@ router.post('/login', function(req, res, next) {
 });
 
 router.post('/logout', function(req, res, next) {
-   delete req.session.userId;
+
+   console.log('유저아이디', req.session.userId);
+   req.logOut();
 
    res.json({
       "message" : "로그아웃되었습니다."
