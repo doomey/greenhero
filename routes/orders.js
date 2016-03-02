@@ -146,7 +146,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                     connection.release();
                                     var err = new Error('보유한 나뭇잎이 주문한 물건의 금액보다 작습니다.');
                                     err.code = "err027";
-                                    callback(err);
+                                    next(err);
                                 } else {
                                     //iparty테이블의 사용자의 totalleaf를 totalleaf-TP로 update
                                     var update = "update greendb.iparty "+
