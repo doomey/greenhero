@@ -41,6 +41,7 @@ router.post('/logout', function(req, res, next) {
 });
 
 router.post('/signup', function(req, res, next) {
+
    if(req.secure) {
       var username = req.body.username;
       var password = req.body.password;
