@@ -3,7 +3,7 @@ var router = express.Router();
 var async = require('async');
 
 function isLoggedIn(req, res, next) {
-    if(!req.isAutenticated()) {
+    if(!req.isAuthenticated()) {
         var err = new Error('로그인이 필요합니다...');
         err. status = 401;
         next(err);
@@ -14,11 +14,12 @@ function isLoggedIn(req, res, next) {
 
 router.get('/', isLoggedIn, function(req, res, next) {
     if(req.secure) {
+        console.log('들어옴');
         var page = parseInt(req.query.page);
         page = isNaN(page)? 1 : page;
         page = (page<1)? 1 : page;
 
-        var limit = 2;
+        var limit = 4;
         var offset = limit*(page-1);
         //1. connection
         //orders, orderdetails join
@@ -33,11 +34,24 @@ router.get('/', isLoggedIn, function(req, res, next) {
             });
         }
 
-        function selectOrders(connection, callback) {
+        function getTotal(connection, callback) {
+            var select = "select count(*) as cnt "+
+                          "from greendb.orders";
+            connection.query(select, [], function(err, results) {
+                if(err) {
+                    connection.release();
+                    callback(err);
+                } else {
+                    callback(null, results[0].cnt, connection);
+                }
+            });
+        }
+        function selectOrders(cnt, connection, callback) {
             var select = "select o.id as id, g.name as name, g.picture as picture, g.price as price, od.quantity as quantity, (g.price * od.quantity) as iprice "+
                          "from greendb.orders o join greendb.orderdetails od on (o.id = od.order_id) "+
                          "join greendb.greenitems g on (od.greenitems_id = g.id) "+
-                         "where iparty_id = ? limit ? offset ?";
+                         "where iparty_id = ? " +
+                         "order by o.id asc limit ? offset ?";
             connection.query(select, [req.user.id, limit, offset], function(err, results) {
                 connection.release();
                 if(err) {
@@ -46,6 +60,7 @@ router.get('/', isLoggedIn, function(req, res, next) {
                     var message = {
                         "result" : {
                             "page" : page,
+                            "cnt" : cnt,
                             "itemsPerPage" : limit,
                             "items" : []
                         }
@@ -66,7 +81,7 @@ router.get('/', isLoggedIn, function(req, res, next) {
                 }
             });
         }
-        async.waterfall([getConnection, selectOrders], function(err, message) {
+        async.waterfall([getConnection, getTotal, selectOrders], function(err, message) {
             if(err) {
                 next(err);
             } else {
