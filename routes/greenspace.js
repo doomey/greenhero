@@ -1,8 +1,11 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
-//var url = require('url');
-//var queryString = require('querystring');
+var bell = require('./bell');
+
+
+
+
 function  getConnection (callback) {
     pool.getConnection(function (err, connection) {
         if (err) {
@@ -342,6 +345,8 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
             res.json(results);
         }
     })
+
+    bell.setMessage('님이 댓들을 다셨습니다.');
 
 });
 
