@@ -346,17 +346,35 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
 });
 
 
-router.put('/:ediaryId/replies/:replyId', function(req, res, next) {
+router.put('/:ediaryId/replies/:replyId', isLoggedIn, function(req, res, next) {
     var reply_id = req.params.replyId;
     var body = req.body.replyBody;
     var ediary_id = req.params.ediaryId;
 
 
+    function compareUser(connection, callback) {
+        var sql = "SELECT * FROM greendb.reply " +
+                  "where iparty_id = ? and ediary_id = ? and id = ?";
+        connection.query(sql, [req.user.id, ediary_id, reply_id], function (err, results) {
+            if(err) {
+                callback(err);
+            } else {
+                if(results.length === 0) {
+                    var err = new Error("글을 수정할 권한이 없습니다.");
+                    next(err);
+                } else {
+                    callback(null, connection);
+                }
+            }
+        })
+    }
+
+
     function updateReply(connection, callback) {
         var sql = "update reply " +
                   "set body = ?, wdatetime = now() " +
-                  "where id = ? and iparty_id = ?";
-        connection.query(sql, [body, reply_id, ediary_id], function (err, result) {
+                  "where iparty_id = ? and ediary_id = ? and id = ?";
+        connection.query(sql, [body, req.user.id, ediary_id, reply_id], function (err, result) {
             connection.release();
             if (err) {
                 callback(err);
@@ -368,7 +386,7 @@ router.put('/:ediaryId/replies/:replyId', function(req, res, next) {
         });
     }
 
-    async.waterfall([getConnection, updateReply], function (err, result) {
+    async.waterfall([getConnection, compareUser, updateReply], function (err, result) {
         if (err) {
             var err = {
                     "code" : "err009",
