@@ -5,6 +5,16 @@ var queryString = require('querystring');
 var async = require('async');
 var passport = require('passport');
 
+function isLoggedIn(req, res, next) {
+    if(!req.isAuthenticated()) {
+        var err = new Error('로그인이 필요합니다...');
+        err. status = 401;
+        next(err);
+    } else {
+        next(null, {"message" : "로그인이 완료되었습니다..."});
+    }
+}
+
 function getConnection(callback){
     pool.getConnection(function(err, connection){
         if(err){
@@ -88,9 +98,9 @@ router.get('/', function(req, res, next){
     });
 });
 
-router.post('/', function(req, res, next){
+router.post('/', isLoggedIn, function(req, res, next){
     var watch = req.body.watch;
-    var iparty_id = parseInt(req.body.ipartyId);
+    var iparty_id = parseInt(req.user.id);
     var userLeaf = 0;
     var tLeaf = 0;
 
