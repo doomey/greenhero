@@ -23,7 +23,7 @@ router.get('/', function(req, res, next) {
     var offset = parseInt((page - 1) * 10);
 
     function selectGreenspace(connection, callback) {
-        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, e.content as content, f.modifiedfilename as fileUrl " +
+        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photoUrl " +
             "FROM e_diary e join (select id, nickname " +
             "from iparty) i " +
             "on(e.iparty_id = i.id) " +
@@ -31,10 +31,13 @@ router.get('/', function(req, res, next) {
             "from reply " +
             "group by ediary_id) r " +
             "on (e.id = r.ediary_id) " +
-            "left join (select refer_id, modifiedfilename " +
-            "from files " +
-            "where refer_type = 1) f " +
+            "left join (select refer_id, photourl " +
+            "from photos " +
+            "where refer_type = 1) p " +
             "on (e.id = f.refer_id) " +
+            "left join (select id, path " +
+                       "from background) b " +
+            "on(e.background_id = b.id) " +
             "order by id desc limit ? offset ?";
         connection.query(sql, [limit, offset], function (err, space) {
             if (err) {
@@ -47,7 +50,7 @@ router.get('/', function(req, res, next) {
     };
 
     function resentGreenspace(connection, results, callback) {
-        var sql = "SELECT e.id, e.title, f.modifiedfilename as thumbnail , e.background_id as backgroundId " +
+        var sql = "SELECT e.id, e.title, p.photourl as thumbnail , b.path as backgroundUrl " +
                   "FROM e_diary e join (select id, nickname " +
                                        "from iparty) i " +
                                  "on(e.iparty_id = i.id) " +
@@ -55,10 +58,13 @@ router.get('/', function(req, res, next) {
                                             "from reply " +
                                  "group by ediary_id) r " +
                                  "on (e.id = r.ediary_id) " +
-                                 "left join (select refer_id, modifiedfilename " +
+                                 "left join (select refer_id, photourl " +
                                             "from files " +
-                                            "where refer_type = 1) f " +
+                                            "where refer_type = 1) p " +
                                        "on (e.id = f.refer_id) " +
+                                 "left join (select id, path " +
+                                 "from background) b " +
+                                 "on(e.background_id = b.id) " +
                                  "order by id desc limit 6 offset 0";
         connection.query(sql, function (err, resent) {
             connection.release();
