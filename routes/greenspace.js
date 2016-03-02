@@ -98,9 +98,9 @@ router.get('/', function(req, res, next) {
                     "wtime": results[i].wtime,
                     "heart": results[i].heart,
                     "rAmount": results[i].rAmount,
-                    "backgroundId": results[i].backgroundId,
+                    "backgroundUrl": results[i].backgroundUrl,
                     "content": results[i].content,
-                    "fileUrl": "/public/photos/" + results[i].fileUrl
+                    "photoUrl": "/public/photos/" + results[i].photoUrl
                 });
             }
             var result = {
