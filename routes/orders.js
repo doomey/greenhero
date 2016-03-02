@@ -3,7 +3,7 @@ var router = express.Router();
 var async = require('async');
 
 function isLoggedIn(req, res, next) {
-    if(!req.isAutenticated()) {
+    if(!req.isAuthenticated()) {
         var err = new Error('로그인이 필요합니다...');
         err. status = 401;
         next(err);
@@ -51,7 +51,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
 
             function selectIparty(connection, callback) {
-                var select = "select google_id, google_name, phone, google_email, totalleaf "+
+                console.log('유저아이디', req.session.userId, req.user.id);
+                var select = "select google_id as gid, google_name as gname, phone, google_email as gmail, totalleaf "+
                              "from greendb.iparty "+
                              "where id = ?";
                 connection.query(select, [req.user.id], function(err, results) {
@@ -66,9 +67,9 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                 "items" : [],
                                 "totalPrice" : 0,
                                 "oInfo" : {
-                                    "id" : results[0].google_id,
-                                    "name" : results[0].google_name,
-                                    "email" : results[0].google_email,
+                                    "id" : results[0].gid,
+                                    "name" : results[0].gname,
+                                    "email" : results[0].gmail,
                                     "phone" : results[0].phone
                                 },
                                 "aInfo" : {
@@ -76,7 +77,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                     "phone1" : phone1,
                                     "phone2" : phone2,
                                     "adCode" : adcode,
-                                    "address" : address
+                                    "address" : address,
+                                    "care" : care
                                 }
                             }
                         };
@@ -134,7 +136,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     function insertOrders(message, TP, callback) {
                         var insert = "insert into greendb.orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
                                       "values(?, date(now()), ?, ?, ?, ?, ?, ?)";
-                        connection.query(insert, [1, name, phone1, phone2, adcode, address, care], function(err, result) {
+                        connection.query(insert, [req.user.id, name, phone1, phone2, adcode, address, care], function(err, result) {
                             if(err) {
                                 connection.rollback();
                                 connection.release();
@@ -151,7 +153,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                     var update = "update greendb.iparty "+
                                                  "set totalleaf = ? "+
                                                  "where id = ?";
-                                    connection.query(update, [(totalleaf-TP), 1], function(err) {
+                                    connection.query(update, [(totalleaf-TP), req.user.id], function(err) {
                                         if(err) {
                                             connection.rollback();
                                             connection.release();
@@ -254,7 +256,7 @@ router.post('/setaddress', function(req, res, next) {
         function insertDaddress(connection, callback) {
             var insert = "insert into greendb.daddress(name, receiver, phone, add_phone, ad_code, address, iparty_id) "+
                           "values(?, ?, ?, ?, ?, ?, ?);";
-            connection.query(insert, ["유저이름", name, phone1, phone2, adcode, address, req.user.id], function(err, result) {
+            connection.query(insert, [req.user.name, name, phone1, phone2, adcode, address, req.user.id], function(err, result) {
                connection.release();
                 if(err) {
                    callback(err);
@@ -264,6 +266,7 @@ router.post('/setaddress', function(req, res, next) {
                             "message" : "주소가 등록되었습니다."
                         }
                     };
+                   console.log('유저이름', req.user.name);
                     callback(null, message);
                 }
             });
