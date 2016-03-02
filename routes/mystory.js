@@ -39,6 +39,7 @@ function isLoggedIn(req, res, next) {
 
 
 router.get('/', function (req, res, next) {
+    var ediary_id = 0;
     var iparty_id = req.query.ipartyId;
     var page = req.query.page;
     var limit = 10;
@@ -107,73 +108,58 @@ router.post('/', isLoggedIn, function(req, res, next) {
     var iparty_id = parseInt(req.user.id); //실제로는 인증정보에서 가져옴
     var title = req.body.title;
     var content = req.body.content;
-    var photo = req.body.photo;
     var bgId = parseInt(req.body.bgId);
 
 
     function writeMystory(connection, callback) {
-        if (photo === null) {
-            //todo 3 : 파일이 없을경우 배경넣어서 insert
-            var sql = "insert into e_diary (iparty_id, title, content, wdatetime, background_id) " +
-              "values (?, ?, ?, now(), ?)";
-            connection.query(sql, [iparty_id, title, content, bgId], function (err, result) {
-                if (err) {
-                    connection.release();
-                    callback(err);
-                } else {
-                    ediary_id = result.insertId;
-                    callback(null, connection);
-                }
-            });
+        var results = {};
+        var form = new formidable.IncomingForm();
+        form.uploadDir = path.join(__dirname, '../uploads');
+        form.keepExtensions = true;
+        form.multiples = true;
 
-        } else {
-            var results = {};
-            var form = new formidable.IncomingForm();
-            form.uploadDir = path.join(__dirname, '../uploads');
-            form.keepExtensions = true;
-            form.multiples = false;
-
-            form.parse(req, function(err, fields, files) {
-                var mimeType = mime.lookup(path.basename(files['photo'].path));
-                var s3 = new AWS.S3({
+        form.parse(req, function (err, fields, files) {
+            var file = files['photo'];
+            console.log("파일의 내용 " + file.name);
+            console.log("필드의 내용 " + fields);
+            var mimeType = mime.lookup(path.basename(file.path));
+            var s3 = new AWS.S3({
                     "accessKeyId": s3Config.key,
                     "secretAccessKey": s3Config.secret,
                     "region": s3Config.region,
                     "params": {
                         "Bucket": s3Config.bucket,
-                        "Key": s3Config.imageDir + "/" + path.basename(files['photo'].path), // 목적지의 이름
+                        "Key": s3Config.imageDir + "/" + path.basename(file.path), // 목적지의 이름
                         "ACL": s3Config.imageACL,
                         "ContentType": mimeType //mime.lookup
                     }
-                });
-                var body = fs.createReadStream(files['photo'].path);
-                s3.upload({"Body": body}) //pipe역할
-                  .on('httpUploadProgress', function (event) {
-                      console.log(event);
-                  })
-                  .send(function (err, data) {
-                      if (err) {
-                          console.log(err);
-                          cb(err);
-                      } else {
-                          console.log(data);
-                          fs.unlink(files['photo'].path, function () {
-                              console.log(files['photo'].path + " 파일이 삭제되었습니다...");
-                              results.push({
-                                  "originalFilename": files['photo'].name,
-                                  "modifiedFilename": path.basename(files['photo'].path),
-                                  "photoType": files['photo'].type,
-                                  "s3URL": data.Location
-                              });
-                              console.log(results);
-                              cb(null);
-                          });
-                      }
-                  });
             });
-
+            var body = fs.createReadStream(file.path);
+            s3.upload({"Body": body}) //pipe역할
+              .on('httpUploadProgress', function (event) {
+                      console.log(event);
+              })
+              .send(function (err, data) {
+                  if (err) {
+                          console.log(err);
+                          callback(err);
+                  } else {
+                      console.log(data);
+                      fs.unlink(file.path, function () {
+                          console.log(files['photo'].path + " 파일이 삭제되었습니다...");
+                          results.push({
+                              "originalFilename": file.name,
+                              "modifiedFilename": path.basename(file.path),
+                              "photoType": file.type,
+                              "s3URL": data.Location
+                          });
+                          console.log(results);
+                          callback(null);
+                      });
+                  }
+              });
             var sql = "insert into e_diary (iparty_id, title, content, wdatetime) " +
-              "values (?, ?, ?, now())";
+                      "values (?, ?, ?, now())";
             connection.query(sql, [iparty_id, title, content], function (err, result) {
                 if (err) {
                     connection.rollback();
@@ -182,21 +168,35 @@ router.post('/', isLoggedIn, function(req, res, next) {
                 } else {
                     var ediary_id = result.insertId;
                     var sql2 = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, " +
-                               "                   phototype, refer_type, refer_id) " +
-                               "values (?, now(), ?, ?, ?, 1, ?)";
+                          "                   phototype, refer_type, refer_id) " +
+                          "values (?, now(), ?, ?, ?, 1, ?)";
                     connection.query(sql2, [results.s3URL, results.originalFilename, results.modifiedFilename, results.photoType, ediary_id]);
-                        if (err) {
-                            connection.rollback();
-                            connection.release();
-                            callback(err);
-                        } else {
-                            callback(null, connection);
-                        }
+                    if (err) {
+                        connection.rollback();
+                        connection.release();
+                        callback(err);
+                    } else {
+                        callback(null, connection);
+                    }
                 }
             });
 
-        }
+
+        });
     }
+    ////todo 3 : 파일이 없을경우 배경넣어서 insert
+    //var sql = "insert into e_diary (iparty_id, title, content, wdatetime, background_id) " +
+    //  "values (?, ?, ?, now(), ?)";
+    //connection.query(sql, [iparty_id, title, content, bgId], function (err, result) {
+    //    if (err) {
+    //        connection.release();
+    //        callback(err);
+    //    } else {
+    //        ediary_id = result.insertId;
+    //        callback(null, connection);
+    //    }
+    //});
+    //
 
 
     function saveLeaf(connection, callback) {
@@ -327,14 +327,13 @@ router.post('/', isLoggedIn, function(req, res, next) {
         } else {
             var results = {
                 "result": {
-                    "ediaryId": ediary_id,
+                    "ediaryId": results.insertId,
                     "message": "쓰기가 완료되었습니다."
                 }
             };
             res.json(results);
         }
-    })
-
+    });
 
 });
 
