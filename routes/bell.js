@@ -1,8 +1,10 @@
 var express = require('express');
 var router = express.Router();
 
+var message = "님이 공감하셨습니다!";
+
 function isLoggedIn(req, res, next) {
-    if(!req.isAutenticated()) {
+    if(!req.isAuthenticated()) {
         var err = new Error('로그인이 필요합니다...');
         err. status = 401;
         next(err);
@@ -10,10 +12,13 @@ function isLoggedIn(req, res, next) {
         next(null, {"message" : "로그인이 완료되었습니다..."});
     }
 }
+module.exports = function setMessage(msg) {
+    message = msg;
+}
 
 router.post('/', isLoggedIn, function(req, res, next) {
-    var nickname = req.body.nickname;
-    var date = req.body.date;
+    var date = new Date();
+    var time = date.getFullYear()+"년"+date.getMonth()+"월"+date.getDay()+"일 "+date.getHours()+"시"+date.getMinutes()+"분";
 
     function getConnection(callback) {
         pool.getConnection(function(err, connection) {
@@ -47,7 +52,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
         } else {
             var user = req.user;
 
-            var server_access_key = 'AIzaSyBaFeq5YGUXdRQmmTLJV2MqmqciZV5AVQk';
+            var server_access_key = "";
             var sender = new gcm.Sender(server_access_key);
             var registrationIds = [];
             registrationIds.push(registration_token);
@@ -57,8 +62,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
                 "delayWhileIdle": true,
                 "timeToLive": 3,
                 "data" : {
-                    "who": nickname,
-                    "message": "댓글누른사람닉네임"+"님이 공감하셨습니다!", //user.nickname으로 교체
+                    "who": req.user.nickname,
+                    "message": req.user.nickname + message,
                     "when": date
                 }
             });
