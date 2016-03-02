@@ -112,7 +112,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
 
     function writeMystory(connection, callback) {
-        if (!photo) {
+        if (photo === null) {
             //todo 3 : 파일이 없을경우 배경넣어서 insert
             var sql = "insert into e_diary (iparty_id, title, content, wdatetime, background_id) " +
               "values (?, ?, ?, now(), ?)";
@@ -127,15 +127,14 @@ router.post('/', isLoggedIn, function(req, res, next) {
             });
 
         } else {
-
+            var results = {};
             var form = new formidable.IncomingForm();
             form.uploadDir = path.join(__dirname, '../uploads');
             form.keepExtensions = true;
-            form.multiples = true;
+            form.multiples = false;
 
             form.parse(req, function(err, fields, files) {
-                var results = [];
-                var mime = mime.lookup(path.basename(files['photo'].path));
+                var mimeType = mime.lookup(path.basename(files['photo'].path));
                 var s3 = new AWS.S3({
                     "accessKeyId": s3Config.key,
                     "secretAccessKey": s3Config.secret,
@@ -144,7 +143,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         "Bucket": s3Config.bucket,
                         "Key": s3Config.imageDir + "/" + path.basename(files['photo'].path), // 목적지의 이름
                         "ACL": s3Config.imageACL,
-                        "ContentType": mime //mime.lookup
+                        "ContentType": mimeType //mime.lookup
                     }
                 });
                 var body = fs.createReadStream(files['photo'].path);
@@ -160,8 +159,14 @@ router.post('/', isLoggedIn, function(req, res, next) {
                           console.log(data);
                           fs.unlink(files['photo'].path, function () {
                               console.log(files['photo'].path + " 파일이 삭제되었습니다...");
-                              results.push({"s3URL": data.Location});
-                              cb();
+                              results.push({
+                                  "originalFilename": files['photo'].name,
+                                  "modifiedFilename": path.basename(files['photo'].path),
+                                  "photoType": files['photo'].type,
+                                  "s3URL": data.Location
+                              });
+                              console.log(results);
+                              cb(null);
                           });
                       }
                   });
@@ -169,15 +174,24 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
             var sql = "insert into e_diary (iparty_id, title, content, wdatetime) " +
               "values (?, ?, ?, now())";
-            connection.query(sql, [iparty_id, title, content], function (err) {
+            connection.query(sql, [iparty_id, title, content], function (err, result) {
                 if (err) {
+                    connection.rollback();
                     connection.release();
                     callback(err);
                 } else {
-
-                    ediary_id = result.insertId;
-                    //todo 5 : 첨부 파일을 insert한다.
-                    callback(null, connection);
+                    var ediary_id = result.insertId;
+                    var sql2 = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, " +
+                               "                   phototype, refer_type, refer_id) " +
+                               "values (?, now(), ?, ?, ?, 1, ?)";
+                    connection.query(sql2, [results.s3URL, results.originalFilename, results.modifiedFilename, results.photoType, ediary_id]);
+                        if (err) {
+                            connection.rollback();
+                            connection.release();
+                            callback(err);
+                        } else {
+                            callback(null, connection);
+                        }
                 }
             });
 
