@@ -33,10 +33,10 @@ router.get('/', function(req, res, next){
     var offset = (page - 1) * 10;
 
     function selectArticles(connection, callback){
-        var sql = "select e.id as eid, e.title, e.cname, e.sdate, e.edate, e.content, " +
-                  "f.modifiedfilename as mo, f.filetype as type " +
-                  "from epromotion e join files f on (f.refer_id = e.id) and (refer_type = 2) " +
-                  "order by eid desc, type limit ? offset ?";
+        var sql = "select e.id, e.title, e.cname, e.sdate, e.edate, " +
+                  "e.content, e.fileurl, p.photourl " +
+                  "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
+                  "order by e.id limit ? offset ?";
         connection.query(sql, [limit, offset], function(err,results){
             connection.release();
             if(err){
@@ -44,32 +44,23 @@ router.get('/', function(req, res, next){
             } else {
                 if(results.length){
                     var list=[];
-                    var modifiedList = [];
-                    var index = 0;
                     async.each(results, function(element, callback){
                         list.push({
-                            "epId" : element.eid,
+                            "epId" : element.id,
                             "title" : element.title,
-                            "thumbnail" : "/public/photos/" + element.mo,
+                            "thumbnail" : element.photourl,
                             "epName" : element.cname,
                             "sDate" : element.sdate,
                             "eDate" : element.edate,
                             "content" : element.content,
-                            "file" : "/public/multimedias/" + element.mo
+                            "movie" : element.fileurl
                         });
-                        if(index%2==1){
-                            list[index-1].file = "/public/photos" + element.mo;
-                            console.log(list[index-1].file);
-                            modifiedList.push(list[index-1]);
-                        }
-                        index++;
                         callback(null);
-                    }, function(err, result){
-                        index = 0;
+                    }, function(err){
                         if(err) {
                             callback(err);
                         } else {
-                            callback(null, modifiedList);
+                            callback(null, list);
                         }
                     });
                 } else {
@@ -104,7 +95,7 @@ router.post('/', isLoggedIn, function(req, res, next){
     var userLeaf = 0;
     var tLeaf = 0;
 
-    if(watch == 1){
+    if(watch === 1){
         function leafTransaction(connection, callback) {
             connection.beginTransaction(function (err) {
                 if (err) {
