@@ -47,7 +47,7 @@ router.get('/', function(req, res, next) {
             "left join (select refer_id, photourl " +
             "from photos " +
             "where refer_type = 1) p " +
-            "on (e.id = f.refer_id) " +
+            "on (e.id = p.refer_id) " +
             "left join (select id, path " +
                        "from background) b " +
             "on(e.background_id = b.id) " +
@@ -72,9 +72,9 @@ router.get('/', function(req, res, next) {
                                  "group by ediary_id) r " +
                                  "on (e.id = r.ediary_id) " +
                                  "left join (select refer_id, photourl " +
-                                            "from files " +
+                                            "from photos " +
                                             "where refer_type = 1) p " +
-                                       "on (e.id = f.refer_id) " +
+                                       "on (e.id = p.refer_id) " +
                                  "left join (select id, path " +
                                  "from background) b " +
                                  "on(e.background_id = b.id) " +
