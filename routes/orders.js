@@ -141,16 +141,18 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                     //2. orders테이블에 insert -> 물품의 총 가격이 totalleaf보다 높으면 rollback
                     function insertOrders(message, TP, callback) {
+                        sqlAes.set(connection, serverKey);
                         var insert =  "insert into greendb.orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
                                       //"values(?, date(now()), ?, ?, ?, ?, ?, ?)";
                                       "values(?, date(now()), " +
-                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + "))" +
-                                      ")";
+                                      sqlAes.encrypt(6)
+                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + "))" +
+                                       + ")";
                         connection.query(insert, [req.user.id, name, phone1, phone2, adcode, address, care], function(err, result) {
                             if(err) {
                                 connection.rollback();
