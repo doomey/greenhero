@@ -107,12 +107,10 @@ router.post('/', isLoggedIn, function(req, res, next) {
     var content = req.body.content;
     var bgId = parseInt(req.body.bgId);
     var ediary_id = 0;
-    var results;
     var location = "";
     var originalFilename = "";
     var modifiedFilename = "";
     var photoType = "";
-    var conn;
 
 
     function writeMystory(connection, callback) {
@@ -342,15 +340,16 @@ router.post('/', isLoggedIn, function(req, res, next) {
 });
 
 
-router.put('/:ediaryId', function(req, res, next) {
+router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
     var body = req.body.replyBody;
     var ediary_id = req.params.ediaryId;
+    var iparty_id = parseInt(req.user.id);
 
 
     function updateReply(connection, callback) {
         var sql = "update reply " +
           "set body = ?, wdatetime = now() " +
-          "where id = ? and iparty_id = ?";
+          "where id = ? and iparty_id = ? asnd";
         connection.query(sql, [body, reply_id, ediary_id], function (err, result) {
             connection.release();
             if (err) {
