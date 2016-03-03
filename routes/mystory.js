@@ -46,20 +46,17 @@ router.get('/', isLoggedIn, function (req, res, next) {
     var offset = parseInt((page - 1) * 10);
 
     function selectMystories(connection, callback) {
-        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, e.content as content, f.modifiedfilename as fileUrl " +
-          "FROM e_diary e join (select id, nickname " +
-          "from iparty) i " +
-          "on(e.iparty_id = i.id) " +
-          "left join (select ediary_id, sum(ediary_id) as rAmount " +
-          "from reply " +
-          "group by ediary_id) r " +
-          "on (e.id = r.ediary_id) " +
-          "left join (select refer_id, modifiedfilename " +
-          "from files " +
-          "where refer_type = 1) f " +
-          "on (e.id = f.refer_id) " +
-          "where e.iparty_id = ? " +
-          "order by id desc limit ? offset ?";
+        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, " +
+                         "e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, " +
+                         "e.content as content, p.photourl as photoUrl " +
+                  "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+                            "left join (select ediary_id, sum(ediary_id) as rAmount " +
+                                       "from reply group by ediary_id) r " +
+                                 "on (e.id = r.ediary_id) " +
+                            "left join (select refer_id, photourl " +
+                                       "from photos where refer_type = 1) p " +
+                                 "on (e.id = p.refer_id) " +
+                  "where e.iparty_id = ? order by id desc limit ? offset ?";
         connection.query(sql, [iparty_id, limit, offset], function (err, results) {
             connection.release();
             if (err) {
