@@ -25,6 +25,7 @@ router.get('/', function(req, res, next){
         var sql = "SELECT id, title, body, date_format(CONVERT_TZ(wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', board_id " +
             "FROM greendb.article " +
             "WHERE board_id = ? " +
+            "order by id desc " +
             "LIMIT ? OFFSET ?";
         var accessterms_num = 3;
         connection.query(sql, [accessterms_num, limit, offset], function(err,results){

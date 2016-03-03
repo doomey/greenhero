@@ -38,7 +38,7 @@ router.get('/', function(req, res, next){
                   "date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
                   "e.content, e.fileurl, p.photourl " +
                   "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
-                  "order by e.id limit ? offset ?";
+                  "order by e.id desc limit ? offset ?";
         connection.query(sql, [limit, offset], function(err,results){
             connection.release();
             if(err){
@@ -92,7 +92,7 @@ router.get('/', function(req, res, next){
 });
 
 router.post('/', isLoggedIn, function(req, res, next){
-    var watch = req.body.watch;
+    var watch = parseInt(req.body.watch);
     var iparty_id = parseInt(req.user.id);
     var userLeaf = 0;
     var tLeaf = 0;
