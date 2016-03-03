@@ -3,6 +3,7 @@ var router = express.Router();
 var async = require('async');
 var passport = require('passport');
 var gcm = require('node-gcm');
+var sqlAes = require('./sqlAES.js');
 
 function isLoggedIn(req, res, next) {
     if(!req.isAuthenticated()) {
@@ -58,12 +59,26 @@ router.get('/me', isLoggedIn, function(req, res, next) {
         }
 
         function selectIparty(connection, callback) {
-            var select = "select i.google_name as name, i.nickname as nickname, i.totalleaf as totalleaf, d.id as id, d.receiver as receiver, d.phone as phone, d.add_phone as addphone, d.ad_code as adcode, d.address as address "+
-                          "from greendb.iparty i join (select * "+
-                          "                            from greendb.daddress "+
-                          "                            where iparty_id = 1 and id = (select max(id) "+
-                          "                                                          from greendb.daddress "+
-                          "                                                          where iparty_id = 1)) d "+
+            sqlAes.set(connection, serverKey);
+            var select = "select i.id, i.google_name as name, i.nickname as nickname, i.totalleaf as totalleaf, " +
+                         "d.id as id, " +
+                         "d.receiver as receiver, " +
+                         "d.phone as phone, d.add_phone as addphone, d.ad_code as adcode, d.address as address "+
+                         "from greendb.iparty i join " +
+                         "(select " +
+                         sqlAes.decrypt("receiver") +
+                         sqlAes.decrypt("phone") +
+                         sqlAes.decrypt("add_phone") +
+                         sqlAes.decrypt("address") +
+                         //"convert(aes_decrypt(receiver, unhex(" + connection.escape(serverKey) + ")) using utf8) as re, " +
+                         //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8) as ph, " +
+                         //"convert(aes_decrypt(add_phone, unhex(" + connection.escape(serverKey) + ")) using utf8) as adph, " +
+                         //"convert(aes_decrypt(address, unhex(" + connection.escape(serverKey) + ")) using utf8) as add, " +
+                         "id, ad_code, iparty_id "+
+                          "from greendb.daddress "+
+                          "where iparty_id = 1 and id = (select max(id) "+
+                          "                              from greendb.daddress "+
+                          "                              where iparty_id = 1)) d "+
                           "                       on (i.id = d.iparty_id)";
             connection.query(select, [req.user.id], function(err, results) {
                 if(err) {

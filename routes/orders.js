@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
+var sqlAes = require('./sqlAES.js');
+
 
 function isLoggedIn(req, res, next) {
     if(!req.isAuthenticated()) {
@@ -51,7 +53,13 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
 
             function selectIparty(connection, callback) {
-                var select = "select google_id as gid, google_name as gname, phone, google_email as gmail, totalleaf "+
+                sqlAes.set(connection, serverKey);
+                //console.log('암호화', sqlAes.decrypt(phone));
+                var select = "select google_id as gid, google_name as gname, " +
+                             //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8), " +
+                             sqlAes.decrypt("phone") +
+                             sqlAes.decrypt("google_email") +
+                             "totalleaf "+
                              "from greendb.iparty "+
                              "where id = ?";
                 connection.query(select, [req.user.id], function(err, results) {
@@ -68,7 +76,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                 "oInfo" : {
                                     "id" : results[0].gid,
                                     "name" : results[0].gname,
-                                    "email" : results[0].gmail,
+                                    "email" : results[0].google_email,
                                     "phone" : results[0].phone
                                 },
                                 "aInfo" : {
@@ -133,8 +141,16 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                     //2. orders테이블에 insert -> 물품의 총 가격이 totalleaf보다 높으면 rollback
                     function insertOrders(message, TP, callback) {
-                        var insert = "insert into greendb.orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
-                                      "values(?, date(now()), ?, ?, ?, ?, ?, ?)";
+                        var insert =  "insert into greendb.orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
+                                      //"values(?, date(now()), ?, ?, ?, ?, ?, ?)";
+                                      "values(?, date(now()), " +
+                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                      "aes_encrypt(?, unhex(" + connection.escape(serverKey) + "))" +
+                                      ")";
                         connection.query(insert, [req.user.id, name, phone1, phone2, adcode, address, care], function(err, result) {
                             if(err) {
                                 connection.rollback();
@@ -253,9 +269,15 @@ router.post('/setaddress', function(req, res, next) {
         }
 
         function insertDaddress(connection, callback) {
-            var insert = "insert into greendb.daddress(name, receiver, phone, add_phone, ad_code, address, iparty_id) "+
-                          "values(?, ?, ?, ?, ?, ?, ?);";
-            connection.query(insert, [req.user.name, name, phone1, phone2, adcode, address, req.user.id], function(err, result) {
+            var insert =  "insert into greendb.daddress(name, receiver, phone, add_phone, address, ad_code, iparty_id) "+
+                          "values(" +
+                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          "?, ?)";
+            connection.query(insert, [req.user.name, name, phone1, phone2, address, adcode, req.user.id], function(err, result) {
                connection.release();
                 if(err) {
                    callback(err);

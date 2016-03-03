@@ -69,8 +69,8 @@ router.get('/', function(req, res, next){
                 "result" : {
                     "page" : page,
                     "listPerPage" : limit,
-                    "cartUrl" : "/member/me/baskets",
-                    "orderUrl" : "/orders",
+                    "cartUrl" : "https://ec2-52-79-101-177.ap-northeast-2.compute.amazonaws.com/member/me/baskets",
+                    "orderUrl" : "https://ec2-52-79-101-177.ap-northeast-2.compute.amazonaws.com/orders",
                     "items" : result
                 }
             });

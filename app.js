@@ -8,6 +8,7 @@ var session = require('express-session');
 var passport = require('passport');
 
 global.pool = require('./config/dbpool');
+global.serverKey = process.env.GREEN_SERVER_KEY;
 require('./config/passportconfig')(passport); //passport를 configuration
 
 
