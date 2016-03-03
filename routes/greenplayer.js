@@ -33,7 +33,9 @@ router.get('/', function(req, res, next){
     var offset = (page - 1) * 10;
 
     function selectArticles(connection, callback){
-        var sql = "select e.id, e.title, e.cname, e.sdate, e.edate, " +
+        var sql = "select e.id, e.title, e.cname, " +
+                  "date_format(CONVERT_TZ(e.sdate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9sdate', " +
+                  "date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
                   "e.content, e.fileurl, p.photourl " +
                   "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
                   "order by e.id limit ? offset ?";
@@ -50,8 +52,8 @@ router.get('/', function(req, res, next){
                             "title" : element.title,
                             "thumbnail" : element.photourl,
                             "epName" : element.cname,
-                            "sDate" : element.sdate,
-                            "eDate" : element.edate,
+                            "sDate" : element.GMT9sdate,
+                            "eDate" : element.GMT9edate,
                             "content" : element.content,
                             "movie" : element.fileurl
                         });

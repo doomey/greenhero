@@ -36,7 +36,7 @@ router.get('/', function(req, res, next) {
     var offset = parseInt((page - 1) * 10);
 
     function selectGreenspace(connection, callback) {
-        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photoUrl " +
+        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photoUrl " +
             "FROM e_diary e join (select id, nickname " +
             "from iparty) i " +
             "on(e.iparty_id = i.id) " +
@@ -47,7 +47,7 @@ router.get('/', function(req, res, next) {
             "left join (select refer_id, photourl " +
             "from photos " +
             "where refer_type = 1) p " +
-            "on (e.id = f.refer_id) " +
+            "on (e.id = p.refer_id) " +
             "left join (select id, path " +
                        "from background) b " +
             "on(e.background_id = b.id) " +
@@ -72,9 +72,9 @@ router.get('/', function(req, res, next) {
                                  "group by ediary_id) r " +
                                  "on (e.id = r.ediary_id) " +
                                  "left join (select refer_id, photourl " +
-                                            "from files " +
+                                            "from photos " +
                                             "where refer_type = 1) p " +
-                                       "on (e.id = f.refer_id) " +
+                                       "on (e.id = p.refer_id) " +
                                  "left join (select id, path " +
                                  "from background) b " +
                                  "on(e.background_id = b.id) " +
@@ -149,7 +149,7 @@ router.get('/:ediaryId/replies', function(req, res, next) {
 
 
   function selectReview(connection, callback) {
-    var sql = "SELECT r.id, r.body, r.wdatetime, i.nickname " +
+    var sql = "SELECT r.id, r.body, date_format(CONVERT_TZ(r.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'wtime', i.nickname " +
               "from reply r join (select id, nickname " +
                                  "from iparty) i " +
                            "on(r.iparty_id = i.id) " +

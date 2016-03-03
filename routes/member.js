@@ -5,7 +5,7 @@ var passport = require('passport');
 var gcm = require('node-gcm');
 
 function isLoggedIn(req, res, next) {
-    if(!req.isAutenticated()) {
+    if(!req.isAuthenticated()) {
         var err = new Error('로그인이 필요합니다...');
         err. status = 401;
         next(err);
@@ -191,7 +191,7 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
         }
 
         function selectLeafhistory(connection, callback) {
-            var select = "select id, applydate, leaftype, changedamount "+
+            var select = "select id, date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', leaftype, changedamount "+
                           "from greendb.leafhistory "+
                           "where iparty_id = ? limit ? offset ?";
             connection.query(select, [req.user.id, limit, offset], function(err, results) {
@@ -208,8 +208,8 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
                         };
                         async.each(results, function(element, callback) {
                             message.result.list.push({
-                                "leafType": element.leafType,
-                                "leafApplydate": element.applydate,
+                                "leafType": element.leaftype,
+                                "leafApplydate": element.GMT9,
                                 "leafChangedamount": element.changedamount
                             });
                             callback(null);

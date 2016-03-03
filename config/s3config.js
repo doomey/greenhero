@@ -4,7 +4,7 @@ module.exports = {
     "region" : "ap-northeast-2", //-1은 도쿄, -2는 서울을 의미한다.
     "bucket" : "greenhero",
     //아래 image--- 키 이름은 임의로 정해도 된다.
-    "imageDir" : "test",
+    "imageDir" : "photos",
     "imageACL" : "public-read"
 }
 

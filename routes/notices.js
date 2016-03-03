@@ -22,7 +22,7 @@ router.get('/', function(req, res, next){
     }
 
     function selectArticles(connection, callback){
-        var sql = "SELECT id, title, body, wdatetime, board_id " +
+        var sql = "SELECT id, title, body, date_format(CONVERT_TZ(wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', board_id " +
             "FROM greendb.article " +
             "WHERE board_id = ? " +
             "LIMIT ? OFFSET ?";
@@ -39,7 +39,7 @@ router.get('/', function(req, res, next){
                             "id" : element.id,
                             "type" : element.board_id,
                             "title" : element.title,
-                            "date" : element.wdatetime,
+                            "date" : element.GMT9,
                             "body" : element.body
                         });
                         callback(null);

@@ -52,6 +52,7 @@ var app = express();
 //로컬
 var local = require('./routes/local');
 
+var upload = require('./routes/uploading_photo');
 
 app.set('env', 'development');
 //app.set('env', 'production');
@@ -109,6 +110,8 @@ app.use('/mystories', mystory);
 
 //로컬
 app.use('/local', local);
+
+app.use('/upload', upload);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
