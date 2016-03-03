@@ -102,10 +102,7 @@ router.get('/', isLoggedIn, function (req, res, next) {
 
 
 router.post('/', isLoggedIn, function(req, res, next) {
-    var iparty_id = parseInt(req.user.id); //실제로는 인증정보에서 가져옴
-    var title = req.body.title;
-    var content = req.body.content;
-    var bgId = parseInt(req.body.bgId);
+    var iparty_id = parseInt(req.user.id);
     var ediary_id = 0;
     var location = "";
     var originalFilename = "";
@@ -341,41 +338,187 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
 
 router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
-    var body = req.body.replyBody;
-    var ediary_id = req.params.ediaryId;
-    var iparty_id = parseInt(req.user.id);
+    var iparty_id = parseInt(req.user.id); //실제로는 인증정보에서 가져옴
+    var ediary_id = parseInt(req.params.ediaryId);
 
+    var form = new formidable.IncomingForm();
+    form.uploadDir = path.join(__dirname, '../uploads');
+    form.keepExtensions = true;
+    form.multiples = true;
 
-    function updateReply(connection, callback) {
-        var sql = "update reply " +
-          "set body = ?, wdatetime = now() " +
-          "where id = ? and iparty_id = ? asnd";
-        connection.query(sql, [body, reply_id, ediary_id], function (err, result) {
-            connection.release();
-            if (err) {
-                callback(err);
+    form.parse(req, function (err, fields, files) {
+        var file = files['photo'];
+        if (file === undefined) {
+            if (fields['bgId'] === undefined) {
+                function emptyUpdate (connection, callback) {
+                    var sql = "update e_diary " +
+                      "set title = ?, content = ?, wdatetime = now() " +
+                      "where iparty_id = ? and id = ?";
+                    connection.query(sql, [fields['title'], fields['content'], iparty_id, ediary_id], function (err, result) {
+                        if (err) {
+                            connection.release();
+                            callback(err);
+                        } else {
+                            callback(null);
+                        }
+                    });
+                }
+
+                async.waterfall([getConnection, emptyUpdate], function (err, results) {
+                    if (err) {
+                        var err = {
+                            "code" : "err009",
+                            "message" : "Mystory를 수정할 수 없습니다."
+                        }
+                        next(err);
+                    } else {
+                        res.json("수정이 완료되었습니다.(emptyupdate)");
+                    }
+                });
+
             } else {
-                callback(null, {
-                    "message" : "수정이 완료되었습니다."
+                function bgUpdate (connection, callback) {
+                    var sql = "update e_diary " +
+                      "set title = ?, content = ?, wdatetime = now(), background_id = ? " +
+                      "where iparty_id = ? and id = ?";
+                    connection.query(sql, [fields['title'], fields['content'], fields['bgId'], iparty_id, ediary_id], function (err, result) {
+                        if (err) {
+                            connection.release();
+                            callback(err);
+                        } else {
+                            callback(null);
+                        }
+                    })
+                }
+                async.waterfall([getConnection, bgUpdate], function (err, results) {
+                    if (err) {
+                        var err = {
+                            "code" : "err009",
+                            "message" : "Mystory를 수정할 수 없습니다."
+                        }
+                        next(err);
+                    } else {
+                        res.json("수정이 완료되었습니다.(bgupdate)");
+                    }
+                })
+
+            }
+
+        } else {
+            function deleteS3Photo(connection, callback) {
+                var sql = "select modifiedfilename " +
+                  "from photos " +
+                  "where refer_type = 1 and refer_id = ?";
+                connection.query(sql, [ediary_id], function (err, results) {
+                    if (err) {
+                        connection.release();
+                        callback(err);
+                    } else if (results.length === 0) {
+                        console.log("사진이 존재하지 않습니다.");
+                        callback(null, connection);
+                    } else {
+                        console.log('수정할 파일명: ' + results[0].modifiedfilename);
+                        var s3 = new AWS.S3({
+                            "accessKeyId": s3Config.key,
+                            "secretAccessKey": s3Config.secret,
+                            "region": s3Config.region
+                        });
+                        var params = {
+                                "Bucket": s3Config.bucket,
+                                "Key": s3Config.imageDir + "/" + results[0].modifiedfilename
+                        };
+                        s3.deleteObject(params, function (err, data) {
+                            if (err) {
+                                connection.release();
+                                console.log(err, err.stack);
+                            } else {
+                                console.log(data);
+                                callback(null, connection);
+                            }
+                        });
+                    }
                 })
             }
-        });
-    }
 
-    async.waterfall([getConnection, updateReply], function (err, result) {
-        if (err) {
-            var err = {
-                "code" : "err009",
-                "message" : "댓글을 수정할 수 없습니다."
+            function updateMystory(connection, callback) {
+                var mimeType = mime.lookup(path.basename(file.path));
+                var s3 = new AWS.S3({
+                    "accessKeyId": s3Config.key,
+                    "secretAccessKey": s3Config.secret,
+                    "region": s3Config.region,
+                    "params": {
+                        "Bucket": s3Config.bucket,
+                        "Key": s3Config.imageDir + "/" + path.basename(file.path),
+                        "ACL": s3Config.imageACL,
+                        "ContentType": mimeType //mime.lookup
+                    }
+                });
+
+                var body = fs.createReadStream(file.path);
+                s3.upload({"Body": body}) //pipe역할
+                  .on('httpUploadProgress', function (event) {
+                      console.log(event);
+                  })
+                  .send(function (err, data) {
+                      if (err) {
+                          console.log(err);
+                          callback(err);
+                      } else {
+                          console.log("데이터의 정보 " + data);
+                          location = data.Location;
+                          originalFilename = file.name;
+                          modifiedFilename = path.basename(file.path);
+                          photoType = file.type;
+                          fs.unlink(file.path, function () {
+                              console.log(files['photo'].path + " 파일이 삭제되었습니다...");
+                          });
+                          var sql = "update e_diary " +
+                            "set title = ?, content = ?, wdatetime = now() " +
+                            "where iparty_id = ? and id = ?";
+                          connection.query(sql, [fields['title'], fields['content'], iparty_id, ediary_id], function (err, result) {
+                              if (err) {
+                                  connection.rollback();
+                                  connection.release();
+                                  callback(err);
+                              } else {
+                                  var sql2 = "update photos " +
+                                    "set photourl = ?, uploaddate = now(), originalfilename = ?, modifiedfilename = ?, photoType = ? " +
+                                    "where refer_type = 1 and refer_id = ?";
+                                  connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
+                                      if (err) {
+                                          connection.rollback();
+                                          connection.release();
+                                          callback(err);
+                                      } else {
+                                          connection.commit();
+                                          connection.release();
+                                          var photoId = result.insertId;
+                                          console.log(photoId);
+                                          callback(null, connection);
+                                      }
+                                  });
+                              }
+                          });
+                      }
+                  });
             }
-            next(err);
-        } else {
-            res.json(result);
+
+            async.waterfall([getConnection, deleteS3Photo, updateMystory], function (err, results) {
+                if (err) {
+                    var err = {
+                        "code" : "err009",
+                        "message" : "Mystory를 수정할 수 없습니다."
+                    }
+                    next(err);
+                } else {
+                    res.json("수정이 완료되었습니다.(updateMystory)");
+                }
+            })
+
+
         }
-    })
-
+    });
 });
-
 
 
 
