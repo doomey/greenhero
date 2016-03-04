@@ -1,8 +1,14 @@
 var sk;
-var conn;
 
-exports.set = function(connection, serverKey) {
-   conn = connection;
+var conn = pool.getConnection(function(err, connection) {
+   if(err) {
+
+   } else {
+      conn = connection;
+   }
+});
+
+exports.setServerKey = function(serverKey) {
    sk = serverKey;
 }
 
@@ -10,10 +16,10 @@ exports.encrypt = function(number) {
    number = parseInt(number);
    var enc = "";
    for(var i = 1; i<number; i++) {
-      enc += " convert(aes_decrypt(?, unhex(" + conn.escape(sk) + ")) using utf8), ";
+      enc += " aes_encrypt(?, unhex(" + conn.escape(sk) + ")), ";
    }
 
-   enc += " convert(aes_decrypt(?, unhex(" + conn.escape(sk) + ")) using utf8)";
+   enc += " aes_encrypt(?, unhex(" + conn.escape(sk) + ")) ";
    return enc;
 }
 
