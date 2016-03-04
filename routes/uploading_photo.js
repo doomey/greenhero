@@ -6,16 +6,16 @@ var s3Config = require('../config/s3Config');
 var AWS = require('aws-sdk');
 var async = require('async');
 var fs = require('fs');
+var mime = require('mime');
 
 router.post('/', function(req, res, next) {
-   var bg = parseInt(req.body.bg);
    var form = new formidable.IncomingForm();
    form.uploadDir = path.join(__dirname, '../uploads');
    form.keepExtensions = true;
    form.multiples = true;
 
    form.parse(req, function(err, fields, files) { //업로드된 파일정보는 files에 있다.
-
+      var bg = parseInt(fields.bg);
       //async.each사용
       //조건 : array, 파일이 1개만 올라올 경우, 파일 업로드가 완료되었을 경우.
 
@@ -29,9 +29,9 @@ router.post('/', function(req, res, next) {
                "region" : s3Config.region,
                "params" : {
                   "Bucket" : s3Config.bucket,
-                  "Key" : (bg=1?s3Config.bgDir:s3Config.imageDir) + "/" + path.basename(file.path), //path.basename으로 file의 이름을 알 수 있다.
+                  "Key" : (bg===1?s3Config.bgDir:s3Config.imageDir) + "/" + path.basename(file.path), //path.basename으로 file의 이름을 알 수 있다.
                   "ACL" : s3Config.imageACL,
-                  "ContentType" : "image/jpeg"
+                  "ContentType" : mime.lookup(path.basename(file.path))//"image/jpeg"
                }
             });
             //파일을 파이프로 이용하여 s3에 바로 업로드. 메모리를 쓰지 않는 방향으로...
@@ -115,9 +115,9 @@ router.post('/', function(req, res, next) {
             "region" : s3Config.region,
             "params" : {
                "Bucket" : s3Config.bucket,
-               "Key" : (bg=1?s3Config.bgDir:s3Config.imageDir) + "/" + path.basename(file.path),
+               "Key" : (bg===1?s3Config.bgDir:s3Config.imageDir) + "/" + path.basename(file.path),
                "ACL" : s3Config.imageACL,
-               "ContentType" : "image/jpeg"
+               "ContentType" : mime.lookup(path.basename(file.path))//"image/jpeg"
             }
          });
          var body = fs.createReadStream(file.path);
