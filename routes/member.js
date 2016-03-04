@@ -5,6 +5,8 @@ var passport = require('passport');
 var gcm = require('node-gcm');
 var sqlAes = require('./sqlAES.js');
 
+sqlAes.setServerKey(serverKey);
+
 function isLoggedIn(req, res, next) {
     if(!req.isAuthenticated()) {
         var err = new Error('로그인이 필요합니다...');
@@ -59,7 +61,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
         }
 
         function selectIparty(connection, callback) {
-            sqlAes.set(connection, serverKey);
+
             var select = "select i.id, i.google_name as name, i.nickname as nickname, i.totalleaf as totalleaf, " +
                          "d.id as id, " +
                          "d.receiver as receiver, " +

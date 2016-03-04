@@ -3,6 +3,7 @@ var router = express.Router();
 var async = require('async');
 var sqlAes = require('./sqlAES.js');
 
+sqlAes.setServerKey(serverKey);
 
 function isLoggedIn(req, res, next) {
     if(!req.isAuthenticated()) {
@@ -53,7 +54,6 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
 
             function selectIparty(connection, callback) {
-                sqlAes.set(connection, serverKey);
                 //console.log('암호화', sqlAes.decrypt(phone));
                 var select = "select google_id as gid, google_name as gname, " +
                              //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8), " +
@@ -141,7 +141,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                     //2. orders테이블에 insert -> 물품의 총 가격이 totalleaf보다 높으면 rollback
                     function insertOrders(message, TP, callback) {
-                        sqlAes.set(connection, serverKey);
+                        //sqlAes.set(connection, serverKey);
                         var insert =  "insert into greendb.orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
                                       //"values(?, date(now()), ?, ?, ?, ?, ?, ?)";
                                       "values(?, date(now()), " +
@@ -271,15 +271,16 @@ router.post('/setaddress', function(req, res, next) {
         }
 
         function insertDaddress(connection, callback) {
-            var insert =  "insert into greendb.daddress(name, receiver, phone, add_phone, address, ad_code, iparty_id) "+
-                          "values(" +
-                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          "?, ?)";
-            connection.query(insert, [req.user.name, name, phone1, phone2, address, adcode, req.user.id], function(err, result) {
+            var insert =  "insert into greendb.daddress(ad_code, iparty_id, name, receiver, phone, add_phone, address) "+
+                          "values(?, ?, " +
+                          sqlAes.encrypt(5)
+                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                          + ")";
+            connection.query(insert, [adcode, req.user.id, req.user.name, name, phone1, phone2, address], function(err, result) {
                connection.release();
                 if(err) {
                    callback(err);

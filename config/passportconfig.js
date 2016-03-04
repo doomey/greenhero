@@ -3,6 +3,10 @@ var bcrypt = require('bcrypt');
 var GoogleConfig = require('./googleConfig');
 var GoogleTokenStrategy = require('passport-google-token').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
+var sqlAes = require('../routes/sqlAES.js');
+
+sqlAes.setServerKey(serverKey);
+
 
 module.exports = function(passport) {
     passport.serializeUser(function(user, done) {
@@ -16,8 +20,10 @@ module.exports = function(passport) {
             } else {
                 var sql = "select " +
                           "id, username, google_id, google_name, " +
-                          "convert(aes_decrypt(name, unhex(" + connection.escape(serverKey) + ")) using utf8) as na, " +
-                          "convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
+                          //"convert(aes_decrypt(name, unhex(" + connection.escape(serverKey) + ")) using utf8) as na, " +
+                          //"convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
+                          sqlAes.decrypt("name") +
+                          sqlAes.decrypt("google_email", true) +
                           "from iparty " +
                           "where id = ?";
                 connection.query(sql, [id], function(err, results) {
@@ -28,7 +34,7 @@ module.exports = function(passport) {
                         var user = {
                             "id" : results[0].id,
                             "username" : results[0].username,
-                            "name" : results[0].na,
+                            "name" : results[0].name,
                             "nickname" : results[0].nickname
                         };
                         done(null, user);
@@ -144,7 +150,8 @@ module.exports = function(passport) {
         //2. selectpassword
         function selectIparty(connection, callback) {
             var select = "select id, username, hashpassword, nickname, google_name, " +
-                         "convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
+                         sqlAes.decrypt("google_email", true) +
+                         //"convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
                          "from greendb.iparty " +
                          "where username = ?";
             connection.query(select, [username], function(err, results) {
@@ -159,7 +166,7 @@ module.exports = function(passport) {
                         var user = {
                             "id" : results[0].id,
                             "hashPassword" : results[0].hashpassword,
-                            "email" : results[0].gemail,
+                            "email" : results[0].google_email,
                             "name" : results[0].google_name,
                             "nickname" : results[0].nickname
                         };
