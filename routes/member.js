@@ -90,7 +90,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                     var message = {
                         "result" : {
                             "gName" : results[0].name,
-                            "nickname" : results[0].nickname,
+                            "nickname" : (!results[0].nickname)? results[0].name : results[0].nickname,
                             "totalLeaf" : results[0].totalleaf,
                             "todayleaf" : 0,
                             "address" : {

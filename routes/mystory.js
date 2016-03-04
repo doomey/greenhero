@@ -367,7 +367,7 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
                 async.waterfall([getConnection, emptyUpdate], function (err, results) {
                     if (err) {
                         var err = {
-                            "code" : "err009",
+                            "code" : "err012",
                             "message" : "Mystory를 수정할 수 없습니다."
                         }
                         next(err);
@@ -393,7 +393,7 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
                 async.waterfall([getConnection, bgUpdate], function (err, results) {
                     if (err) {
                         var err = {
-                            "code" : "err009",
+                            "code" : "err012",
                             "message" : "Mystory를 수정할 수 없습니다."
                         }
                         next(err);
@@ -506,7 +506,7 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
             async.waterfall([getConnection, deleteS3Photo, updateMystory], function (err, results) {
                 if (err) {
                     var err = {
-                        "code" : "err009",
+                        "code" : "err012",
                         "message" : "Mystory를 수정할 수 없습니다."
                     }
                     next(err);
