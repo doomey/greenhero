@@ -8,6 +8,7 @@ var async = require('async');
 var fs = require('fs');
 
 router.post('/', function(req, res, next) {
+   var bg = parseInt(req.body.bg);
    var form = new formidable.IncomingForm();
    form.uploadDir = path.join(__dirname, '../uploads');
    form.keepExtensions = true;
@@ -28,7 +29,7 @@ router.post('/', function(req, res, next) {
                "region" : s3Config.region,
                "params" : {
                   "Bucket" : s3Config.bucket,
-                  "Key" : s3Config.imageDir + "/" + path.basename(file.path), //path.basename으로 file의 이름을 알 수 있다.
+                  "Key" : (bg=1?s3Config.bgDir:s3Config.imageDir) + "/" + path.basename(file.path), //path.basename으로 file의 이름을 알 수 있다.
                   "ACL" : s3Config.imageACL,
                   "ContentType" : "image/jpeg"
                }
@@ -62,16 +63,29 @@ router.post('/', function(req, res, next) {
                      }
 
                      function insertPhotos(connection, callback) {
-                        var insert = "insert into greendb.photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
-                           "values(?, now(), ?, ?, ?, 1, 1)";
-                        connection.query(insert, [data.Location, file.name, path.basename(file.path), (path.extname(file.name)).replace('.', ''), 1, 1], function(err, result) {
-                           connection.release();
-                           if(err) {
-                              callback(err);
-                           } else {
-                              callback(null, true);
-                           }
-                        });
+                        if(bg===1){
+                           var insert = "insert into greendb.background(name, path) "+
+                               "values(?, ?)";
+                           connection.query(insert, [file.name, data.Location], function(err, result) {
+                              connection.release();
+                              if(err) {
+                                 callback(err);
+                              } else {
+                                 callback(null, true);
+                              }
+                           });
+                        } else {
+                           var insert = "insert into greendb.photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
+                               "values(?, now(), ?, ?, ?, 1, 1)";
+                           connection.query(insert, [data.Location, file.name, path.basename(file.path), (path.extname(file.name)).replace('.', ''), 1, 1], function(err, result) {
+                              connection.release();
+                              if(err) {
+                                 callback(err);
+                              } else {
+                                 callback(null, true);
+                              }
+                           });
+                        }
                      }
                      async.waterfall([getConnection, insertPhotos], function(err, result) {
                         if(err) {
@@ -101,7 +115,7 @@ router.post('/', function(req, res, next) {
             "region" : s3Config.region,
             "params" : {
                "Bucket" : s3Config.bucket,
-               "Key" : s3Config.imageDir + "/" + path.basename(file.path),
+               "Key" : (bg=1?s3Config.bgDir:s3Config.imageDir) + "/" + path.basename(file.path),
                "ACL" : s3Config.imageACL,
                "ContentType" : "image/jpeg"
             }
@@ -133,16 +147,29 @@ router.post('/', function(req, res, next) {
                   }
 
                   function insertPhotos(connection, callback) {
-                     var insert = "insert into greendb.photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
-                        "values(?, now(), ?, ?, ?, 1, 1)";
-                     connection.query(insert, [data.Location, file.name, path.basename(file.path), (path.extname(file.name)).replace('.', ''), 1, 1], function(err, result) {
-                        connection.release();
-                        if(err) {
-                           callback(err);
-                        } else {
-                           callback(null, true);
-                        }
-                     });
+                     if(bg===1){
+                        var insert = "insert into greendb.background(name, path) "+
+                            "values(?, ?)";
+                        connection.query(insert, [file.name, data.Location], function(err, result) {
+                           connection.release();
+                           if(err) {
+                              callback(err);
+                           } else {
+                              callback(null, true);
+                           }
+                        });
+                     } else {
+                        var insert = "insert into greendb.photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
+                            "values(?, now(), ?, ?, ?, 1, 1)";
+                        connection.query(insert, [data.Location, file.name, path.basename(file.path), (path.extname(file.name)).replace('.', ''), 1, 1], function(err, result) {
+                           connection.release();
+                           if(err) {
+                              callback(err);
+                           } else {
+                              callback(null, true);
+                           }
+                        });
+                     }
                   }
                   async.waterfall([getConnection, insertPhotos], function(err, result) {
                      if(err) {
