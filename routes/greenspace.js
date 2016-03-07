@@ -36,7 +36,7 @@ router.get('/', function(req, res, next) {
     var offset = parseInt((page - 1) * 10);
 
     function selectGreenspace(connection, callback) {
-        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photoUrl " +
+        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photourl " +
             "FROM e_diary e join (select id, nickname " +
             "from iparty) i " +
             "on(e.iparty_id = i.id) " +
@@ -113,7 +113,7 @@ router.get('/', function(req, res, next) {
                     "rAmount": results[i].rAmount,
                     "backgroundUrl": results[i].backgroundUrl,
                     "content": results[i].content,
-                    "photoUrl": "/public/photos/" + results[i].photoUrl
+                    "photoUrl": results[i].photourl
                 });
             }
             var result = {
