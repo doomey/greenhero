@@ -7,7 +7,10 @@ var async = require('async');
 router.get('/', function(req, res, next){
     var urlObj = url.parse(req.url).query;
     var urlQuery = queryString.parse(urlObj);
-    var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
+    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
+    var page = parseInt(req.query.page);
+    page = isNaN(page) ? 1 : page;
+    page = (page<1) ? 1 : page;
     var limit = 10;
     var offset = (page - 1) * 10;
 
@@ -69,8 +72,8 @@ router.get('/', function(req, res, next){
                 "result" : {
                     "page" : page,
                     "listPerPage" : limit,
-                    "cartUrl" : "https://ec2-52-79-101-177.ap-northeast-2.compute.amazonaws.com/member/me/baskets",
-                    "orderUrl" : "https://ec2-52-79-101-177.ap-northeast-2.compute.amazonaws.com/orders",
+                    //"cartUrl" : "https://ec2-52-79-101-177.ap-northeast-2.compute.amazonaws.com/members/me/baskets",
+                    //"orderUrl" : "https://ec2-52-79-101-177.ap-northeast-2.compute.amazonaws.com/orders",
                     "items" : result
                 }
             });
