@@ -48,6 +48,8 @@ var multimedia = require('./routes/multimedia');
 
 var mystory = require('./routes/mystory');
 
+var migration = require('./routes/migration');
+
 var app = express();
 
 //로컬
@@ -113,6 +115,8 @@ app.use('/mystories', mystory);
 app.use('/local', local);
 
 app.use('/upload', upload);
+
+app.use('/migration', migration);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
