@@ -28,7 +28,10 @@ function getConnection(callback){
 router.get('/', function(req, res, next){
     var urlObj = url.parse(req.url).query;
     var urlQuery = queryString.parse(urlObj);
-    var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
+    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
+    var page = parseInt(req.query.page);
+    page = isNaN(page) ? 1 : page;
+    page = (page<1) ? 1 : page;
     var limit = 10;
     var offset = (page - 1) * 10;
 

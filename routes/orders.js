@@ -55,10 +55,9 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
             function selectIparty(connection, callback) {
                 //console.log('암호화', sqlAes.decrypt(phone));
-                var select = "select google_id as gid, google_name as gname, " +
+                var select = "select google_id as gid, google_name as gname, google_email, " +
                              //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8), " +
                              sqlAes.decrypt("phone") +
-                             sqlAes.decrypt("google_email") +
                              "totalleaf "+
                              "from greendb.iparty "+
                              "where id = ?";

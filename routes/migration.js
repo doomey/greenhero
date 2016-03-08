@@ -5,23 +5,16 @@ var xlsx = require('xlsx');
 var path = require('path');
 var fs = require('fs');
 
-
 var router = express.Router();
 
-
-
 router.post('/excel', function(req, res, next){
-    //todo 1 : INSERT에서 사용할 SQL문을 작성한다.
-    //현재는 ... /uploads/test.xlsx를 읽는다.
-    var workbook = xlsx.readFile(path.join(__dirname, '../uploads/excel', 'test.xlsx'));
-
-
-
-
-
     //먼저 로컬에서 s3랑 연동 안 되는 엑셀 시트를 먼저 작업하자.
     //암호화 잘 구분하고...
     //기본키 테이블을 먼저 넣고, 외래키 있는 테이블은 나중에 넣자
+
+    //todo 1 : INSERT에서 사용할 SQL문을 작성한다.
+    //현재는 ... /uploads/test.xlsx를 읽는다.
+    var workbook = xlsx.readFile(path.join(__dirname, '../uploads/excel', 'test2.xlsx'));
 
     //workbook.SheetNames 배열에 워크시트 이름이 들어간다.
     //이 워크시트 이름이 데이터베이스의 테이블명이 된다.
@@ -30,9 +23,8 @@ router.post('/excel', function(req, res, next){
     //워크시트 객체 얻기
     var worksheet = workbook.Sheets[first_sheet_name];
 
-    var desired_cell = worksheet['A1'];
-
-    var desired_value = desired_cell.v;
+    //var desired_cell = worksheet['A1'];
+    //var desired_value = desired_cell.v;
 
 
     var columnArr = []; //컬럼명이 있는 셀의 위치. 예 : A1~D1
@@ -40,9 +32,13 @@ router.post('/excel', function(req, res, next){
     var columnValue = []; // DB에 넣을 실제 데이터의 배열.
     //[(value1, value2, value3), (value4, value5, value6), ...]
 
+    var rowsCount = [];
+
+
     var sheet_name_list = workbook.SheetNames;
     sheet_name_list.forEach(function(y) { /* iterate through sheets */
         var worksheet = workbook.Sheets[y];
+        var i = 0;
         for (z in worksheet) {
             /* all keys that do not begin with "!" correspond to cell addresses */
             if(z[0] === '!') continue;
@@ -51,8 +47,39 @@ router.post('/excel', function(req, res, next){
             if(parseInt(z.substring(1,2)) === 1 && parseInt(z.length) === 2){
                 columnArr.push(z);
             }
+            ++i;
         }
+        rowsCount.push(i / columnArr.length);
+        console.log("length of " + y + " is " + i / columnArr.length);
+    });
 
+    var countOfColumn = columnArr.length;
+
+
+    sheet_name_list.forEach(function(y) { /* iterate through sheets */
+        var worksheet = workbook.Sheets[y];
+        var j = 2;
+        var title = [];
+        var array = [];
+        for (z in worksheet) {
+            /* all keys that do not begin with "!" correspond to cell addresses */
+            if(z[0] === '!') continue;
+            //console.log(y + "!" + z + "=" + JSON.stringify(worksheet[z].v));
+            //console.log(z.substring(1, z.length));
+            if(z.substring(1, z.length) == 1) {
+                title.push(worksheet[z].w)
+            } else {
+                if(z.substring(1, z.length) == j){
+                    array.push(worksheet[z].w);
+                } else {
+                    console.log("데이터 배열: " + array)
+                    j++;
+                    array = [];
+                    array.push(worksheet[z].w);
+                }
+            }
+        }
+        console.log("타이틀: " + title);
     });
 
     console.log(columnArr);
@@ -91,7 +118,9 @@ router.post('/excel', function(req, res, next){
         }
     });
 
-    columnValue.push();
+    console.log(columnArr[0].substring(0,1));
+
+
 
     //todo 3 : DB에 INSERT하기
 
@@ -114,15 +143,25 @@ router.post('/excel', function(req, res, next){
             + connection.escape(enc2);
 
 
+        var testArr = [];
 
-        connection.query(sql, [worksheet['A2'].w, worksheet['B2'].w, worksheet['C2'].w, worksheet['D2'].w], function(err, result){
-            connection.release();
-            if(err){
-                callback(err);
-            } else {
-                callback(null, result.insertId);
+        for(var i=2 ; i<=rowsCount[0] ; i++){
+            for(var j=0 ; j<columnArr.length ; j++){
+                var temp = columnArr[j].substring(0,1) + i.toString();
+                testArr.push()
+
             }
-        })
+
+
+            connection.query(sql, [worksheet['A2'].w, worksheet['B2'].w, worksheet['C2'].w, worksheet['D2'].w], function(err, result){
+                connection.release();
+                if(err){
+                    callback(err);
+                } else {
+                    callback(null, result.insertId);
+                }
+            })
+        }
     }
 
     async.waterfall([], function(err, result){
@@ -132,8 +171,6 @@ router.post('/excel', function(req, res, next){
     res.json({
         "workSheetName" : first_sheet_name,
         "worksheetObject" : worksheet,
-        "desiredCell" : desired_cell,
-        "desiredValue" : desired_value,
         //"workbook" : workbook,
         //"value" : value
         //"columnArr" : columnArr
