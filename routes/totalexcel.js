@@ -11,21 +11,41 @@ var s3Config = require('../config/s3Config');
 router.get('/', function(req, res, next) {
   if (typeof require !== 'undefined') XLSX = require('xlsx');
   var workbook = XLSX.readFile(path.join(__dirname, '../uploads/excel', 'datatable.xlsx'));
-  var sheet_name = workbook.SheetNames[1];
-  var worksheet = workbook.Sheets[sheet_name];
-  var sheetName = XLSX.utils.sheet;
-  console.log("sheetname: " + sheetName);
-  var sheet = XLSX.utils.sheet_to_json(worksheet);
-
-  console.log(sheet_name);
-  console.log(sheet);
-
+  var sheet;
   function getConnection(callback){
     pool.getConnection(function(err, connection){
       if(err){
         callback(err);
       } else {
         callback(null, connection);
+      }
+    });
+  }
+
+  function insertBoard (connection, callback) {
+    var resultArr = [];
+    async.eachSeries(sheet, function (item, callback) {
+      var sql = "insert into board(name)" +
+        "values(?)"
+      connection.query(sql, [item.name],  function(err, result) {
+        if (err) {
+          var err = new Error('Board 데이터 생성에 실패하였습니다.');
+        } else {
+          var result = {
+            "id ": result.insertId,
+            "name" : item.name
+          }
+          resultArr.push(result);
+        }
+        callback(null);
+      });
+    }, function (err) {
+      connection.release();
+      if(err) {
+        callback(err);
+      } else {
+        console.log("Borad Data insert: " + resultArr);
+        callback(null, resultArr)
       }
     });
   }
@@ -79,25 +99,48 @@ router.get('/', function(req, res, next) {
           }
         });
     }, function (err) {
+      if (err) {
+        console.log("fail!!!");
+        callback(err);
+      } else {
+        console.log("success!!!");
+        callback(null, resultArr);
+      }
+    });
+  }
+
+  async.eachSeries(workbook.SheetNames, function (item, callback) {
+      var sheet_name = item;
+      var worksheet = workbook.Sheets[sheet_name];
+      sheet = XLSX.utils.sheet_to_json(worksheet);
+
+      if(sheet_name === "board") {
+        async.waterfall([getConnection, insertBoard], function (err, result) {
           if (err) {
-            console.log("fail!!!");
             callback(err);
           } else {
-            console.log("success!!!");
-            callback(null, resultArr);
+            callback(null);
           }
         });
-    }
-
-
-  async.waterfall([getConnection, insertGreenItems], function (err, result) {
-    if (err) {
-      next(err);
-    } else {
-      console.log(result);
-      res.json(result);
-    }
+      } else if(sheet_name === "greenitems") {
+        async.waterfall([getConnection, insertGreenItems], function (err, result) {
+          if (err) {
+            callback(err);
+          } else {
+            console.log(result);
+            callback(null);
+          }
+        });
+      }
+  }, function (err) {
+      if (err) {
+        next(err);
+      } else {
+        var success = "insert가 성공하였습니다.";
+        res.json(success);
+      }
   });
+
 
 
 });
@@ -106,17 +149,19 @@ router.get('/', function(req, res, next) {
 
 
 
-  //var mimeType = mime.lookup(item.picture);
-  //var s3 = new AWS.S3({
-  //  "accessKeyId" : s3Config.key,
-  //  "secretAccessKey" : s3Config.secret,
-  //  "region" : s3Config.region,
-  //  "params" : {
-  //    "Bucket" : s3Config.bucket,
-  //    "Key" : s3Config.imageDir + "/" + item.picture,
-  //    "ACL" : s3Config.imageACL,
-  //    "ContentType": mimeType //mime.lookup
-  //  }
-  //});
+
+
+//var mimeType = mime.lookup(item.picture);
+//var s3 = new AWS.S3({
+//  "accessKeyId" : s3Config.key,
+//  "secretAccessKey" : s3Config.secret,
+//  "region" : s3Config.region,
+//  "params" : {
+//    "Bucket" : s3Config.bucket,
+//    "Key" : s3Config.imageDir + "/" + item.picture,
+//    "ACL" : s3Config.imageACL,
+//    "ContentType": mimeType //mime.lookup
+//  }
+//});
 
 module.exports = router;

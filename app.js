@@ -43,8 +43,8 @@ var members = require('./routes/member');
 
 var orders = require('./routes/orders');
 var receipt = require('./routes/receipt');
-
-
+var excel2 = require('./routes/excel2');
+var totalexcel = require('./routes/totalexcel');
 
 var mystory = require('./routes/mystory');
 
@@ -115,6 +115,8 @@ app.use('/local', local);
 app.use('/upload', upload);
 
 app.use('/migration', migration);
+app.use('/excel2', excel2);
+app.use('/totalexcel', totalexcel);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
