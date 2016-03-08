@@ -28,7 +28,6 @@ function getConnection(callback){
 router.get('/', function(req, res, next){
     var urlObj = url.parse(req.url).query;
     var urlQuery = queryString.parse(urlObj);
-    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
     var page = parseInt(req.query.page);
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
@@ -37,12 +36,12 @@ router.get('/', function(req, res, next){
 
     function selectArticles(connection, callback){
         var sql = "select e.id, e.title, e.cname, " +
-                  "date_format(CONVERT_TZ(e.sdate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9sdate', " +
-                  "date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
-                  "e.content, e.fileurl, p.photourl " +
-                  "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
-                  "order by e.id desc limit ? offset ?";
-        connection.query(sql, [limit, offset], function(err,results){
+            "date_format(CONVERT_TZ(e.sdate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9sdate', " +
+            "date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
+            "e.content, e.fileurl, p.photourl " +
+            "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
+            "order by e.id desc limit ? offset ?";
+        connection.query(sql, [limit, offset], function(err, results){
             connection.release();
             if(err){
                 callback(err);
@@ -54,11 +53,7 @@ router.get('/', function(req, res, next){
                             "epId" : element.id,
                             "title" : element.title,
                             "thumbnail" : element.photourl,
-                            "epName" : element.cname,
-                            "sDate" : element.GMT9sdate,
-                            "eDate" : element.GMT9edate,
-                            "content" : element.content,
-                            "movie" : element.fileurl
+                            "epName" : element.cname
                         });
                         callback(null);
                     }, function(err){
@@ -89,6 +84,63 @@ router.get('/', function(req, res, next){
                     "listPerPage" : limit,
                     "list" : result
                 }
+            });
+        }
+    });
+});
+
+router.get('/:greenplayerId', function(req, res, next){
+    var greenplayerId = req.params.greenplayerId
+    var urlObj = url.parse(req.url).query;
+    var urlQuery = queryString.parse(urlObj);
+    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
+    var page = parseInt(req.query.page);
+    page = isNaN(page) ? 1 : page;
+    page = (page<1) ? 1 : page;
+    var limit = 10;
+    var offset = (page - 1) * 10;
+
+    function selectArticles(connection, callback){
+        var sql = "select e.id, e.title, e.cname, " +
+                  "date_format(CONVERT_TZ(e.sdate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9sdate', " +
+                  "date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
+                  "e.content, e.fileurl, p.photourl " +
+                  "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
+                  "where e.id = ? " +
+                  "order by e.id desc limit ? offset ?";
+        connection.query(sql, [greenplayerId, limit, offset], function(err,results){
+            connection.release();
+            if(err){
+                callback(err);
+            } else {
+                if(results.length){
+                    callback(null, {
+                        "epId" : results[0].id,
+                        "title" : results[0].title,
+                        "epName" : results[0].cname,
+                        "sDate" : results[0].GMT9sdate,
+                        "eDate" : results[0].GMT9edate,
+                        "content" : results[0].content,
+                        "movie" : results[0].fileurl
+                    });
+
+                } else {
+                    callback(err);
+                }
+            }
+        });
+    }
+    //
+    async.waterfall([getConnection, selectArticles], function(err, result){
+        if(err){
+            var err = {
+                "code" : "err013",
+                "message" : "GREEN PLAYER 을(를) 불러올 수 없습니다."
+            }
+            next(err);
+        } else {
+            res.json({
+                "result" : result
             });
         }
     });
