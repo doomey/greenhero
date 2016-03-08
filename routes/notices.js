@@ -81,4 +81,53 @@ router.get('/', function(req, res, next){
     });
 });
 
+router.get('/:noticeid', function(req, res, next) {
+   var noticeid = parseInt(req.params.noticeid);
+
+   //getConnection
+   function getConnection(callback){
+      pool.getConnection(function(err, connection){
+         if(err){
+            callback(err);
+         } else {
+            callback(null, connection);
+         }
+      });
+   }
+   //selectNotice
+   function selectNotice(connection, callback) {
+      var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
+                    "from greendb.article "+
+                    "where board_id = 1 and id = ?";
+      connection.query(select, [noticeid], function(err, results) {
+         connection.release();
+         if(err) {
+            callback(err);
+         } else {
+            var info = {
+               "results" : {
+                  "id" : noticeid,
+                  "type" : 1,
+                  "title" : results[0].title,
+                  "date" : results[0].wdatetime,
+                  "body" : results[0].body
+               }
+            };
+
+            callback(null, info);
+         }
+      });
+   }
+
+   async.waterfall([getConnection, selectNotice], function(err, result) {
+      if(err) {
+         err.message = "공지사항 불러오기 실패하였습니다...";
+         err.code = "err022";
+         next(err);
+      } else {
+         res.json(result);
+      }
+   });
+});
+
 module.exports = router;
