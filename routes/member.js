@@ -17,33 +17,33 @@ function isLoggedIn(req, res, next) {
     }
 }
 
-router.get('/', passport.authenticate('google-token'),
-    function(req, res, next) {
-        if(req.secure) {
-            console.log('members들어옴');
-                if(err) {
-                    err.code = "err001";
-                    err.message = "연동에 실패하였습니다...";
-                    next(err);
-                } else {
-                    req.logIn(user, function(err) {
-                        if(err) {
-                            next(err);
-                        } else {
-                            res.json({
-                                "result" : {
-                                    "message" : "로그인이 완료 되었습니다. 감사합니다!"
-                                }
-                            });
-                        }
-                    });
-                }
-        } else {
-            var err = new Error("SSL/TLS Upgrade Required");
-            err.status = 426;
-            next(err);
-        }
-    });
+//router.get('/', passport.authenticate('google-token'),
+//    function(req, res, next) {
+//        if(req.secure) {
+//            console.log('members들어옴');
+//                if(err) {
+//                    err.code = "err001";
+//                    err.message = "연동에 실패하였습니다...";
+//                    next(err);
+//                } else {
+//                    req.logIn(user, function(err) {
+//                        if(err) {
+//                            next(err);
+//                        } else {
+//                            res.json({
+//                                "result" : {
+//                                    "message" : "로그인이 완료 되었습니다. 감사합니다!"
+//                                }
+//                            });
+//                        }
+//                    });
+//                }
+//        } else {
+//            var err = new Error("SSL/TLS Upgrade Required");
+//            err.status = 426;
+//            next(err);
+//        }
+//    });
 
 router.get('/me', isLoggedIn, function(req, res, next) {
     if(req.secure) {
@@ -92,7 +92,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                             "gName" : results[0].name,
                             "nickname" : (!results[0].nickname)? results[0].name : results[0].nickname,
                             "totalLeaf" : results[0].totalleaf,
-                            "todayleaf" : 0,
+                            "todayLeaf" : 0,
                             "address" : {
                                 "dName" : results[0].receiver,
                                 "dPhone1" :results[0].phone,
@@ -117,7 +117,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                 if(err) {
                     callback(err);
                 } else {
-                    message.result.todayleaf = (todayleaf - (isNaN(results[0].chdamt)?0:results[0].chdamt));
+                    message.result.todayLeaf = (todayleaf - (isNaN(results[0].chdamt)?0:results[0].chdamt));
                     callback(null, message);
                 }
             });
