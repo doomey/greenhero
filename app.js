@@ -43,8 +43,8 @@ var members = require('./routes/member');
 
 var orders = require('./routes/orders');
 var receipt = require('./routes/receipt');
-var photo = require('./routes/photo');
-var multimedia = require('./routes/multimedia');
+
+
 
 var mystory = require('./routes/mystory');
 
@@ -104,10 +104,8 @@ app.use('/members', members);
 
 app.use('/orders', orders);
 app.use('/receipt', receipt);
-app.use('/photos', photo);
-app.use('heartbells/me', bell);
+app.use('/bells/me', bell);
 
-app.use('/multimedias', multimedia);
 
 app.use('/mystories', mystory);
 

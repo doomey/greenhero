@@ -41,22 +41,27 @@ function isLoggedIn(req, res, next) {
 router.get('/', isLoggedIn, function (req, res, next) {
     var ediary_id = 0;
     var iparty_id = parseInt(req.user.id);
-    var page = req.query.page;
+   var page = parseInt(req.query.page);
+   page = (isNaN(page))? 1 : page;
+   page = (page < 1)? 1 : page;
+
     var limit = 10;
     var offset = parseInt((page - 1) * 10);
 
     function selectMystories(connection, callback) {
         var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, " +
-                         "e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, " +
-                         "e.content as content, p.photourl as photoUrl " +
-                  "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
-                            "left join (select ediary_id, sum(ediary_id) as rAmount " +
-                                       "from reply group by ediary_id) r " +
-                                 "on (e.id = r.ediary_id) " +
-                            "left join (select refer_id, photourl " +
-                                       "from photos where refer_type = 1) p " +
-                                 "on (e.id = p.refer_id) " +
-                  "where e.iparty_id = ? order by id desc limit ? offset ?";
+                  "e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, b.path as backgroundUrl, " +
+                  "e.content as content, p.photourl as photoUrl " +
+                  "FROM e_diary e join (select id, nickname from iparty) i " +
+                  "               on(e.iparty_id = i.id) " +
+                  "               left join (select ediary_id, sum(ediary_id) as rAmount " +
+                  "                          from reply group by ediary_id) r " +
+                  "               on (e.id = r.ediary_id) " +
+                  "               left join (select refer_id, photourl from photos where refer_type = 1) p " +
+                  "               on (e.id = p.refer_id) " +
+                  "               left join (select id, path from background) b " +
+                  "               on (b.id = e.background_id) " +
+                  "WHERE e.iparty_id = ? order by id desc limit ? offset ?";
         connection.query(sql, [iparty_id, limit, offset], function (err, results) {
             connection.release();
             if (err) {
@@ -65,6 +70,122 @@ router.get('/', isLoggedIn, function (req, res, next) {
                 callback(null, results);
             }
         });
+    };
+
+    async.waterfall([getConnection, selectMystories], function (err, results) {
+        if (err) {
+            var err = {
+                "code": "err011",
+                "message": "MYSTORY를 불러올 수 없습니다."
+            }
+        } else {
+            var list = [];
+            for(var i = 0; i< results.length; i++){
+                list.push({
+                    "id" : results[i].id,
+                    "title": results[i].title,
+                    "nickname": results[i].nickname,
+                    "wtime": results[i].wtime,
+                    "heart": results[i].heart,
+                    "rAmount": results[i].rAmount,
+                    "backgroundUrl": results[i].backgroundUrl,
+                    "content": results[i].content,
+                    "photoUrl": results[i].photoUrl
+                });
+            }
+            var result = {
+                "result": {
+                    "page": page,
+                    "listPerPage": limit,
+                    "list": list
+                }
+            };
+            res.json(result);
+        }
+    });
+});
+
+router.get('/searching', isLoggedIn, function (req, res, next) {
+   var ediary_id = 0;
+   var iparty_id = parseInt(req.user.id);
+   var page = parseInt(req.query.page);
+   page = (isNaN(page)) ? 1 : page;
+   page = (page < 1) ? 1 : page;
+
+   var search = req.query.search;
+   var type = req.query.type;
+
+   var limit = 10;
+   var offset = parseInt((page - 1) * 10);
+
+   function selectMystories(connection, callback) {
+
+      if (type === 'title') {
+         var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, " +
+            "e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, " +
+            "e.content as content, p.photourl as photoUrl " +
+            "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+            "left join (select ediary_id, sum(ediary_id) as rAmount " +
+            "from reply group by ediary_id) r " +
+            "on (e.id = r.ediary_id) " +
+            "left join (select refer_id, photourl " +
+            "from photos where refer_type = 1) p " +
+            "on (e.id = p.refer_id) " +
+            "where e.iparty_id = ? and e.title like ? order by id desc limit ? offset ?";
+         connection.query(sql, [iparty_id, search, limit, offset], function (err, results) {
+            console.log('리저츠', results);
+            connection.release();
+            if (err) {
+               callback(err);
+            } else {
+               callback(null, results);
+            }
+         });
+      }
+
+      if (type === 'body') {
+         var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, " +
+            "e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, " +
+            "e.content as content, p.photourl as photoUrl " +
+            "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+            "left join (select ediary_id, sum(ediary_id) as rAmount " +
+            "from reply group by ediary_id) r " +
+            "on (e.id = r.ediary_id) " +
+            "left join (select refer_id, photourl " +
+            "from photos where refer_type = 1) p " +
+            "on (e.id = p.refer_id) " +
+            "where e.iparty_id = ? and e.content like ? order by id desc limit ? offset ?";
+         connection.query(sql, [iparty_id, search, limit, offset], function (err, results) {
+            connection.release();
+            if (err) {
+               callback(err);
+            } else {
+               callback(null, results);
+            }
+         });
+      }
+
+   if (type === 'nickname') {
+      var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, " +
+         "e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, " +
+         "e.content as content, p.photourl as photoUrl " +
+         "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+         "left join (select ediary_id, sum(ediary_id) as rAmount " +
+         "from reply group by ediary_id) r " +
+         "on (e.id = r.ediary_id) " +
+         "left join (select refer_id, photourl " +
+         "from photos where refer_type = 1) p " +
+         "on (e.id = p.refer_id) " +
+         "where e.iparty_id = ? and i.nickname like ? order by id desc limit ? offset ?";
+      connection.query(sql, [iparty_id, search, limit, offset], function (err, results) {
+         connection.release();
+         if (err) {
+            callback(err);
+         } else {
+            callback(null, results);
+         }
+      });
+   }
     };
 
     async.waterfall([getConnection, selectMystories], function (err, results) {
@@ -99,7 +220,6 @@ router.get('/', isLoggedIn, function (req, res, next) {
         }
     });
 });
-
 
 router.post('/', isLoggedIn, function(req, res, next) {
     var iparty_id = parseInt(req.user.id);
