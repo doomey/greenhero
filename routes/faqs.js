@@ -80,4 +80,57 @@ router.get('/', function(req, res, next){
     });
 });
 
+router.get('/:faqid', function(req, res, next) {
+    var faqid = parseInt(req.params.faqid);
+
+    //getConnection
+    function getConnection(callback){
+        pool.getConnection(function(err, connection){
+            if(err){
+                callback(err);
+            } else {
+                callback(null, connection);
+            }
+        });
+    }
+    //selectFAQ
+    function selectFaq(connection, callback) {
+        var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
+           "from greendb.article "+
+           "where board_id = 3 and id = ?";
+        connection.query(select, [faqid], function(err, results) {
+            connection.release();
+            if(err) {
+                callback(err);
+            } else {
+                if(results.length === 0) {
+                   res.json({"message" : "해당하는 FAQ가 없습니다."});
+                } else {
+                   var info = {
+                      "results" : {
+                         "id" : faqid,
+                         "type" : 3,
+                         "title" : results[0].title,
+                         "date" : results[0].wdatetime,
+                         "body" : results[0].body
+                      }
+                   };
+
+                   callback(null, info);
+                }
+            }
+        });
+    }
+
+    async.waterfall([getConnection, selectFaq], function(err, result) {
+        if(err) {
+            err.message = "FAQ를 불러오지 못하였습다...";
+            err.code = "err023";
+            next(err);
+        } else {
+            res.json(result);
+        }
+    });
+});
+
 module.exports = router;

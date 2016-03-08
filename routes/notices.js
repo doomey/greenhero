@@ -104,17 +104,22 @@ router.get('/:noticeid', function(req, res, next) {
          if(err) {
             callback(err);
          } else {
-            var info = {
-               "results" : {
-                  "id" : noticeid,
-                  "type" : 1,
-                  "title" : results[0].title,
-                  "date" : results[0].wdatetime,
-                  "body" : results[0].body
-               }
-            };
+            if(results.length === 0) {
+               res.json({"message" : "해당 공지사항이 없습니다."});
+            } else {
+               var info = {
+                  "results" : {
+                     "id" : noticeid,
+                     "type" : 1,
+                     "title" : results[0].title,
+                     "date" : results[0].wdatetime,
+                     "body" : results[0].body
+                  }
+               };
 
-            callback(null, info);
+               callback(null, info);
+            }
+
          }
       });
    }

@@ -80,4 +80,57 @@ router.get('/', function(req, res, next){
     });
 });
 
+router.get('/:policyid', function(req, res, next) {
+    var policyid = parseInt(req.params.policyid);
+
+    //getConnection
+    function getConnection(callback){
+        pool.getConnection(function(err, connection){
+            if(err){
+                callback(err);
+            } else {
+                callback(null, connection);
+            }
+        });
+    }
+    //selectFAQ
+    function selectFaq(connection, callback) {
+        var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
+           "from greendb.article "+
+           "where board_id = 4 and id = ?";
+        connection.query(select, [policyid], function(err, results) {
+            connection.release();
+            if(err) {
+                callback(err);
+            } else {
+                if(results.length === 0) {
+                    res.json({"message" : "해당하는 운영정책이 없습니다."});
+                } else {
+                    var info = {
+                        "results" : {
+                            "id" : policyid,
+                            "type" : 4,
+                            "title" : results[0].title,
+                            "date" : results[0].wdatetime,
+                            "body" : results[0].body
+                        }
+                    };
+
+                    callback(null, info);
+                }
+            }
+        });
+    }
+
+    async.waterfall([getConnection, selectFaq], function(err, result) {
+        if(err) {
+            err.message = "운영정책을 불러오지 못하였습다...";
+            err.code = "err025";
+            next(err);
+        } else {
+            res.json(result);
+        }
+    });
+});
+
 module.exports = router;

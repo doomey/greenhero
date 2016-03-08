@@ -80,4 +80,57 @@ router.get('/', function(req, res, next){
     });
 });
 
+router.get('/:accesstermid', function(req, res, next) {
+    var accesstermid = parseInt(req.params.accesstermid);
+
+    //getConnection
+    function getConnection(callback){
+        pool.getConnection(function(err, connection){
+            if(err){
+                callback(err);
+            } else {
+                callback(null, connection);
+            }
+        });
+    }
+    //selectAccessterm
+    function selectAccessterm(connection, callback) {
+        var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
+           "from greendb.article "+
+           "where board_id = 2 and id = ?";
+        connection.query(select, [accesstermid], function(err, results) {
+            connection.release();
+            if(err) {
+                callback(err);
+            } else {
+                if(results.length === 0) {
+                    res.json({"message" : "해당하는 이용약관이 없습니다."});
+                } else {
+                    var info = {
+                        "results" : {
+                            "id" : accesstermid,
+                            "type" : 2,
+                            "title" : results[0].title,
+                            "date" : results[0].wdatetime,
+                            "body" : results[0].body
+                        }
+                    };
+
+                    callback(null, info);
+                }
+            }
+        });
+    }
+
+    async.waterfall([getConnection, selectAccessterm], function(err, result) {
+        if(err) {
+            err.message = "이용약관을 불러오지 못하였습다...";
+            err.code = "err024";
+            next(err);
+        } else {
+            res.json(result);
+        }
+    });
+});
+
 module.exports = router;
