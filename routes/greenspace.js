@@ -148,19 +148,13 @@ router.get('/:ediaryId', function(req, res, next) {
       next(err);
     } else {
       var list = {
-          "id" : results[0].id,
-          "title": results[0].title,
           "nickname": results[0].nickname,
           "wtime": results[0].wtime,
-          "heart": results[0].heart,
-          "rAmount": results[0].rAmount,
-          "backgroundUrl": results[0].backgroundUrl,
-          "content": results[0].content,
-          "photoUrl": results[0].photourl
+          "content": results[0].content
       };
       var result = {
         "result": {
-          "list": list,
+          "list": [list],
           "newest" : results.newest
         }
       };

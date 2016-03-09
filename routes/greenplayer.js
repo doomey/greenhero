@@ -115,9 +115,6 @@ router.get('/:greenplayerId', function(req, res, next){
             } else {
                 if(results.length){
                     callback(null, {
-                        "epId" : results[0].id,
-                        "title" : results[0].title,
-                        "epName" : results[0].cname,
                         "sDate" : results[0].GMT9sdate,
                         "eDate" : results[0].GMT9edate,
                         "content" : results[0].content,
@@ -140,7 +137,9 @@ router.get('/:greenplayerId', function(req, res, next){
             next(err);
         } else {
             res.json({
-                "result" : result
+                "result" : {
+                    "list" : [result]
+                }
             });
         }
     });

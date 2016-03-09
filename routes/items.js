@@ -110,11 +110,6 @@ router.get('/:itemsId', function(req, res, next){
             } else {
                 if(results.length){
                     callback(null, {
-                        "id" : results[0].id,
-                        "name": results[0].name,
-                        "picture": results[0].picture,
-                        "star" : results[0].star,
-                        "price": results[0].price,
                         "itemCount": results[0].tquantity,
                         "itemDescription": results[0].description
                     });
@@ -134,7 +129,9 @@ router.get('/:itemsId', function(req, res, next){
             next(err);
         } else {
             res.json({
-                "result" : result
+                "result" : {
+                    "items" : [result]
+                }
             });
         }
     });
