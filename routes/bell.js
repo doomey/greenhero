@@ -1,92 +1,79 @@
 var express = require('express');
 var router = express.Router();
+var async = require('async');
+var gcm = require('node-gcm');
 
-var message = "님이 공감하셨습니다!";
+var user;
+var message;
+var receivers;
 
-function isLoggedIn(req, res, next) {
-    if(!req.isAuthenticated()) {
-        var err = new Error('로그인이 필요합니다...');
-        err. status = 401;
-        next(err);
-    } else {
-        next(null, {"message" : "로그인이 완료되었습니다..."});
-    }
-}
-module.exports = function setMessage(msg) {
-    message = msg;
+exports.set = function(sender, receiver, msg) {
+   user = sender;
+   receivers = receiver
+   message = msg || "공감하였습니다!";
 }
 
-router.post('/', isLoggedIn, function(req, res, next) {
-    var date = new Date();
-    var time = date.getFullYear()+"년"+date.getMonth()+"월"+date.getDay()+"일 "+date.getHours()+"시"+date.getMinutes()+"분";
+exports.push = function() {
+   //커넥션
+   function getConnection(callback) {
+      pool.getConnection(function(err, connection) {
+         if(err) {
+            callback(err);
+         } else {
+            callback(null, connection);
+         }
+      })
+   }
+   //select Iparty
+   function selectIparty(connection, callback) {
 
-    function getConnection(callback) {
-        pool.getConnection(function(err, connection) {
-            if(err) {
-                callback(err);
-            } else {
-                callback(null, connection);
-            }
-        })
-    }
+      var select = "select registration_token, date_format(CONVERT_TZ(now(),'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as time " +
+         "from greendb.iparty "+
+         "where nickname = ?";
+      connection.query(select, [receivers], function(err, results) {
+         connection.release();
+         if(err) {
+            callback(err);
+         } else {
+            callback(null, results[0]);
+         }
+      });
+   }
+   //
+   function sendMessage(info, callback) {
 
-    function selectIparty(connection, callback) {
-        var select = "select registration_token "+
-            "from greendb.iparty "+
-            "where nickname = ?";
-        connection.querty(select, [1], function(err, results) {
-            connection.release();
-            if(err) {
-                callback(err);
-            } else {
-                callback(null, results[0].registration_token);
-            }
-        });
-    }
+      var server_access_key = "AIzaSyADRF0g8ms7lVksTmV8L0Ln5r76eMGdaS8";
+      var sender = new gcm.Sender(server_access_key);
+      var registrationIds = [];
+      registrationIds.push(info.registration_token);
 
-    async.waterfall([getConnection, selectIparty], function(err, registration_token) {
-        if(err) {
-            err.code = "err005";
-            err.message = "알림종을 불러올 수 없습니다.";
+      var message = new gcm.Message({
+         "collapseKey": 'demo',
+         "delayWhileIdle": true,
+         "timeToLive": 3,
+         "data" : {
+            "who": user,
+            "message": message,
+            "date": info.time
+         }
+      });
+
+      sender.send(message, registrationIds, 4, function(err, result) {
+         if(err) {
             next(err);
-        } else {
-            var user = req.user;
+         } else {
+            console.log(result);
+         }
+      });
 
-            var server_access_key = "";
-            var sender = new gcm.Sender(server_access_key);
-            var registrationIds = [];
-            registrationIds.push(registration_token);
+      callback(null);
+   }
 
-            var message = new gcm.Message({
-                "collapseKey": 'demo',
-                "delayWhileIdle": true,
-                "timeToLive": 3,
-                "data" : {
-                    "who": req.user.nickname,
-                    "message": req.user.nickname + message,
-                    "when": date
-                }
-            });
-
-            sender.send(message, registrationIds, 4, function(err, result) {
-                console.log(result);
-            })
-
-            sender.send(message, tokens, function(err, result) {
-                if(err) {
-                    next(err);
-                } else {
-                    result.results.forEach(function(item) {
-                        if(item.message_id) {
-                            console.log('success : '+item.message_id);
-                        } else {
-                            console.log('error : '+item.error);
-                        }
-                    });
-                }
-            });
-        }
-    });
-});
-
-module.exports = router;
+   async.waterfall([getConnection, selectIparty, sendMessage], function(err) {
+      if(err) {
+         return false;
+      } else {
+         return true;
+      }
+   });
+}
