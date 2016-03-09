@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var bell = require('./bell');
-
+var b;
 
 
 
@@ -148,9 +148,15 @@ router.get('/:ediaryId', function(req, res, next) {
       next(err);
     } else {
       var list = {
+          "id" : results[0].id,
+          "title": results[0].title,
           "nickname": results[0].nickname,
           "wtime": results[0].wtime,
-          "content": results[0].content
+          "heart": results[0].heart,
+          "rAmount": results[0].rAmount,
+          "backgroundUrl": results[0].backgroundUrl,
+          "content": results[0].content,
+          "photoUrl": results[0].photourl
       };
       var result = {
         "result": {

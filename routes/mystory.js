@@ -9,7 +9,7 @@ var AWS = require('aws-sdk');
 var mime = require('mime');
 var s3Config = require('../config/s3Config');
 /* GET home page. */
-
+var a;
 var data = [];
 
 
@@ -49,18 +49,11 @@ router.get('/', isLoggedIn, function (req, res, next) {
     var offset = parseInt((page - 1) * 10);
 
     function selectMystories(connection, callback) {
-        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, e.wdatetime as wtime, " +
-                  "e.heart as heart, ifnull(r.rAmount,0) as rAmount, e.background_id as backgroundId, b.path as backgroundUrl, " +
-                  "e.content as content, p.photourl as photoUrl " +
-                  "FROM e_diary e join (select id, nickname from iparty) i " +
-                  "               on(e.iparty_id = i.id) " +
-                  "               left join (select ediary_id, sum(ediary_id) as rAmount " +
+        var sql = "SELECT e.id as id, e.title as title, e.wdatetime as wtime, " +
+                  "e.heart as heart, ifnull(r.rAmount,0) as rAmount " +
+                  "FROM e_diary e left join (select ediary_id, sum(ediary_id) as rAmount " +
                   "                          from reply group by ediary_id) r " +
                   "               on (e.id = r.ediary_id) " +
-                  "               left join (select refer_id, photourl from photos where refer_type = 1) p " +
-                  "               on (e.id = p.refer_id) " +
-                  "               left join (select id, path from background) b " +
-                  "               on (b.id = e.background_id) " +
                   "WHERE e.iparty_id = ? order by id desc limit ? offset ?";
         connection.query(sql, [iparty_id, limit, offset], function (err, results) {
             connection.release();
@@ -84,13 +77,9 @@ router.get('/', isLoggedIn, function (req, res, next) {
                 list.push({
                     "id" : results[i].id,
                     "title": results[i].title,
-                    "nickname": results[i].nickname,
                     "wtime": results[i].wtime,
                     "heart": results[i].heart,
                     "rAmount": results[i].rAmount,
-                    "backgroundUrl": results[i].backgroundUrl,
-                    "content": results[i].content,
-                    "photoUrl": results[i].photoUrl
                 });
             }
             var result = {
@@ -104,6 +93,61 @@ router.get('/', isLoggedIn, function (req, res, next) {
         }
     });
 });
+
+
+router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
+    var ediary_id = parseInt(req.params.ediaryId);
+    var iparty_id = parseInt(req.user.id);
+
+    function selectMystories(connection, callback) {
+        var sql = "SELECT i.nickname as nickname, " +
+          "b.path as backgroundUrl, " +
+          "e.content as content, p.photourl as photoUrl " +
+          "FROM e_diary e join (select id, nickname from iparty) i " +
+          "on(e.iparty_id = i.id) " +
+          "left join (select ediary_id, sum(ediary_id) as rAmount " +
+                     "from reply group by ediary_id) r " +
+          "on (e.id = r.ediary_id) " +
+          "left join (select refer_id, photourl from photos where refer_type = 1) p " +
+          "on (e.id = p.refer_id) " +
+          "left join (select id, path from background) b " +
+          "on (b.id = e.background_id) " +
+          "WHERE e.iparty_id = ? and e.id = ?";
+        connection.query(sql, [iparty_id, ediary_id], function (err, results) {
+            connection.release();
+            if (err) {
+                callback(err);
+            } else {
+                callback(null, results);
+            }
+        });
+    };
+
+    async.waterfall([getConnection, selectMystories], function (err, results) {
+        var list;
+        if (err) {
+            var err = {
+                "code": "err011",
+                "message": "MYSTORY를 불러올 수 없습니다."
+            }
+        } else {
+                list = {
+                    "nickname": results[0].nickname,
+                    "backgroundUrl": results[0].backgroundUrl,
+                    "content": results[0].content,
+                    "photoUrl": results[0].photoUrl
+                };
+            }
+            var result = {
+                "result": {
+                    "list": [list]
+                }
+            };
+            res.json(result);
+        });
+    });
+
+
 
 router.post('/', isLoggedIn, function(req, res, next) {
     var iparty_id = parseInt(req.user.id);
