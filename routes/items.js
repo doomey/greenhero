@@ -61,8 +61,8 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectItems], function(err, result){
         if(err){
             var err = {
-                "code" : "err014",
-                "message" : "GREEN SHOP의 물건들을 불러올 수 없습니다."
+                "code" : "err018",
+                "message" : "GREEN SHOP의 물건 목록들을 불러올 수 없습니다."
             }
             next(err);
         } else {
@@ -123,8 +123,8 @@ router.get('/:itemsId', function(req, res, next){
     async.waterfall([getConnection, selectItems], function(err, result){
         if(err){
             var err = {
-                "code" : "err014",
-                "message" : "GREEN SHOP의 물건들을 불러올 수 없습니다."
+                "code" : "err019",
+                "message" : "GREEN SHOP의 물건 상세들을 불러올 수 없습니다."
             }
             next(err);
         } else {

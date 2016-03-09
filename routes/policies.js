@@ -64,7 +64,7 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err024",
+                "code" : "err032",
                 "message" : "운영정책 불러오기를 실패하였습니다."
             }
             next(err);
@@ -124,8 +124,8 @@ router.get('/:policyid', function(req, res, next) {
 
     async.waterfall([getConnection, selectFaq], function(err, result) {
         if(err) {
-            err.message = "운영정책을 불러오지 못하였습다...";
-            err.code = "err025";
+            err.message = "운영정책 상세 불러오기를 실패하였습니다.";
+            err.code = "err033";
             next(err);
         } else {
             res.json(result);

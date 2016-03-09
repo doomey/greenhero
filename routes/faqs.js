@@ -64,8 +64,8 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err022",
-                "message" : "FAQ 불러오기를 실패하였습니다."
+                "code" : "err030",
+                "message" : "FAQ 목록 불러오기를 실패하였습니다."
             }
             next(err);
         } else {
@@ -124,8 +124,8 @@ router.get('/:faqid', function(req, res, next) {
 
     async.waterfall([getConnection, selectFaq], function(err, result) {
         if(err) {
-            err.message = "FAQ를 불러오지 못하였습다...";
-            err.code = "err023";
+            err.message = "FAQ 상세 불러오기를 실패하였습니다...";
+            err.code = "err031";
             next(err);
         } else {
             res.json(result);

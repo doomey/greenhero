@@ -73,8 +73,8 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err013",
-                "message" : "GREEN PLAYER 을(를) 불러올 수 없습니다."
+                "code" : "err015",
+                "message" : "GREEN PLAYER 목록을 불러올 수 없습니다."
             }
             next(err);
         } else {
@@ -131,8 +131,8 @@ router.get('/:greenplayerId', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err013",
-                "message" : "GREEN PLAYER 을(를) 불러올 수 없습니다."
+                "code" : "err016",
+                "message" : "GREEN PLAYER 상세를 불러올 수 없습니다."
             }
             next(err);
         } else {
@@ -271,7 +271,7 @@ router.post('/', isLoggedIn, function(req, res, next){
         async.waterfall([getConnection, leafTransaction], function (err, results) {
             if(err){
                 var err = {
-                    "code" : "err014-1",
+                    "code" : "err017-1",
                     "message" : "메시지는 전송받았으나 나뭇잎 적립 도중 오류가 발생했습니다."
                 }
                 next(err);
@@ -285,7 +285,7 @@ router.post('/', isLoggedIn, function(req, res, next){
         });
     } else {
         var err = {
-            "code" : "err014",
+            "code" : "err017",
             "message" : "시청 완료 메시지가 정상적으로 전송되지 않았으니 확인해 주세요."
         }
         next(err);

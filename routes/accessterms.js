@@ -64,8 +64,8 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err023",
-                "message" : "이용약관 불러오기를 실패하였습니다."
+                "code" : "err028",
+                "message" : "이용약관 목록 불러오기를 실패하였습니다."
             }
             next(err);
         } else {
@@ -124,8 +124,8 @@ router.get('/:accesstermid', function(req, res, next) {
 
     async.waterfall([getConnection, selectAccessterm], function(err, result) {
         if(err) {
-            err.message = "이용약관을 불러오지 못하였습다...";
-            err.code = "err024";
+            err.message = "이용약관 상세 불러오기를 실패하였습니다.";
+            err.code = "err029";
             next(err);
         } else {
             res.json(result);

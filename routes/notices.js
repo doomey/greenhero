@@ -65,8 +65,8 @@ router.get('/', function(req, res, next){
         //err = new Error();
         if(err){
             var err = {
-                "code" : "err021",
-                "message" : "공지사항 불러오기를 실패하였습니다."
+                "code" : "err026",
+                "message" : "공지사항 목록 불러오기를 실패하였습니다."
             }
             next(err);
         } else {
@@ -126,8 +126,8 @@ router.get('/:noticeid', function(req, res, next) {
 
    async.waterfall([getConnection, selectNotice], function(err, result) {
       if(err) {
-         err.message = "공지사항 불러오기 실패하였습니다...";
-         err.code = "err022";
+         err.message = "공지사항 상세 불러오기를 실패하였습니다...";
+         err.code = "err027";
          next(err);
       } else {
          res.json(result);
