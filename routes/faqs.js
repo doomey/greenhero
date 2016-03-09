@@ -107,13 +107,13 @@ router.get('/:faqid', function(req, res, next) {
                    res.json({"message" : "해당하는 FAQ가 없습니다."});
                 } else {
                    var info = {
-                      "results" : {
-                         "id" : faqid,
-                         "type" : 3,
-                         "title" : results[0].title,
-                         "date" : results[0].wdatetime,
-                         "body" : results[0].body
-                      }
+                       "results" : {
+                           "list" : [
+                               {
+                                   "body" : results[0].body
+                               }
+                           ]
+                       }
                    };
 
                    callback(null, info);

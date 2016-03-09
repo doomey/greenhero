@@ -109,11 +109,11 @@ router.get('/:noticeid', function(req, res, next) {
             } else {
                var info = {
                   "results" : {
-                     "id" : noticeid,
-                     "type" : 1,
-                     "title" : results[0].title,
-                     "date" : results[0].wdatetime,
-                     "body" : results[0].body
+                      "list" : [
+                          {
+                              "body" : results[0].body
+                          }
+                      ]
                   }
                };
 
