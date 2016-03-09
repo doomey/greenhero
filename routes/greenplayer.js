@@ -286,7 +286,7 @@ router.post('/', isLoggedIn, function(req, res, next){
     } else {
         var err = {
             "code" : "err017",
-            "message" : "시청 완료 메시지가 정상적으로 전송되지 않았으니 확인해 주세요."
+            "message" : "오늘의 나뭇잎 충전량을 초과하였습니다."
         }
         next(err);
     }
