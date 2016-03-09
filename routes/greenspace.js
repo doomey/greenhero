@@ -160,7 +160,7 @@ router.get('/:ediaryId', function(req, res, next) {
       };
       var result = {
         "result": {
-          "ediary": list,
+          "list": list,
           "newest" : results.newest
         }
       };
