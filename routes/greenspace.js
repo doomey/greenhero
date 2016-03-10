@@ -45,8 +45,8 @@ router.get('/', function(req, res, next) {
                   "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
                   "left join (select id, path from background) b on(e.background_id = b.id) order by id desc limit ? offset ?";
         connection.query(sql, [limit, offset], function (err, results) {
+          connection.release();
             if (err) {
-                connection.release();
                 callback(err);
             } else {
                 callback(null, results)
