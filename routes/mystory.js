@@ -101,7 +101,7 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
 
     function selectMystories(connection, callback) {
         var sql = "SELECT i.nickname as nickname, " +
-          "b.path as backgroundUrl, " +
+          "b.photourl as backgroundUrl, " +
           "e.content as content, p.photourl as photoUrl " +
           "FROM e_diary e join (select id, nickname from iparty) i " +
           "on(e.iparty_id = i.id) " +
@@ -110,8 +110,8 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
           "on (e.id = r.ediary_id) " +
           "left join (select refer_id, photourl from photos where refer_type = 1) p " +
           "on (e.id = p.refer_id) " +
-          "left join (select id, path from background) b " +
-          "on (b.id = e.background_id) " +
+          "left join (select refer_id, photourl from photos where refer_type = 4) b " +
+          "on (e.id = b.refer_id)  " +
           "WHERE e.iparty_id = ? and e.id = ?";
         connection.query(sql, [iparty_id, ediary_id], function (err, results) {
             connection.release();
