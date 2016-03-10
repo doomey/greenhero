@@ -159,13 +159,29 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
 
     function writeMystory(connection, callback) {
-        var form = new formidable.IncomingForm();
-        form.uploadDir = path.join(__dirname, '../uploads');
-        form.keepExtensions = true;
-        form.multiples = true;
+        if(req.headers['content-type'] === 'application/x-www-form-urlencoded') {
+            var title = req.body.title;
+            var content = req.body.content;
+            var bgId = req.body.bgId;
 
-        form.parse(req, function (err, fields, files) {
-            if (fields['bgId'] === undefined) {
+            var sql = "insert into e_diary (iparty_id, title, content, wdatetime, background_id) " +
+              "values (?, ?, ?, now(), ?)";
+            connection.query(sql, [iparty_id, title, content, bgId], function (err, result) {
+                if (err) {
+                    connection.release();
+                    callback(err);
+                } else {
+                    ediary_id = result.insertId;
+                    callback(null, connection);
+                }
+            });
+        } else {
+            var form = new formidable.IncomingForm();
+            form.uploadDir = path.join(__dirname, '../uploads');
+            form.keepExtensions = true;
+            form.multiples = true;
+
+            form.parse(req, function (err, fields, files) {
                 var file = files['photo'];
                 console.log("파일의 내용 " + file.name);
                 console.log("필드의 내용 " + fields);
@@ -227,23 +243,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
                           });
                       }
                   });
-
-
-
-            } else {
-                var sql = "insert into e_diary (iparty_id, title, content, wdatetime, background_id) " +
-                  "values (?, ?, ?, now(), ?)";
-                connection.query(sql, [iparty_id, fields['title'], fields['content'], fields['bgId']], function (err, result) {
-                    if (err) {
-                        connection.release();
-                        callback(err);
-                    } else {
-                        ediary_id = result.insertId;
-                        callback(null, connection);
-                    }
-                });
-            }
-        });
+            });
+        }
     }
 
     function saveLeaf(connection, callback) {
