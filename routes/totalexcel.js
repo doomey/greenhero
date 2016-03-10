@@ -27,8 +27,8 @@ router.get('/', function(req, res, next) {
       }
     });
   }
-  
-  
+
+
   function generateSalt(connection, callback){
     bcrypt.genSalt(10, function(err, salt){
       if(err){
@@ -40,12 +40,13 @@ router.get('/', function(req, res, next) {
   }
 
   function insertIparty(salt, connection, callback){
+    var resultArr = [];
     var sql = "insert into iparty(username, hashpassword, nickname, partytype, name, phone) " +
         "values(?, ?, ?, ?, " +
         sqlAes.encrypt(2) +
         ")";
 
-    async.each(sheet, function(item, cb){
+    async.eachSeries(sheet, function(item, cb){
       //console.log("test : " + item);
       //console.log("변형되어야 할 값 1: " + item.hashpassword);
       bcrypt.hash(item.hashpassword, salt, function(err, hashPassword){
@@ -73,6 +74,7 @@ router.get('/', function(req, res, next) {
       })
 
     }, function(err, result){
+      connection.release();
       if(err){
         callback(err);
       } else {
@@ -82,13 +84,118 @@ router.get('/', function(req, res, next) {
     })
   }
 
+  ///// 새로 짜기 시작한 부분 ////////
+  function insertDaddress(connection, callback){
+    var resultArr = [];
+    var sql = "insert into daddress(ad_code, iparty_id, name, receiver, phone, add_phone, address) " +
+        "values(?, ?, "  +
+        sqlAes.encrypt(5) +
+        ")";
+    async.eachSeries(sheet, function(item, cb){
+      connection.query(sql, [item.ad_code, item.iparty_id, item.name, item.receiver, item.phone, item.add_phone, item.address], function(err, result){
+        if(err){
+          connection.release();
+          cb(err);
+        } else {
+          var list = {
+            "id" : result.insertId
+          }
+          resultArr.push(list);
+          cb(null);
+        }
+      });
+    }, function(err){
+      connection.release();
+      if(err){
+        callback(err);
+      } else {
+        callback(null, resultArr);
+      }
+    });
+  }
+
+  function insertReply(connection, callback){
+    var sql = "insert into reply(body, wdatetime, ediary_id, iparty_id) " +
+              "values(?, ?, ?, ?)";
+    async.eachSeries(sheet, function(item, cb){
+      connection.query(sql, [item.body, item.wdatetime, item.ediary_id, item.iparty_id], function(err, result){
+        if(err){
+          cb(err);
+        } else {
+          var result = {
+            "id" : result.insertId
+          }
+          cb(null, result);
+        }
+      });
+    }, function(err, result){
+      connection.release();
+      if(err){
+        callback(err);
+      } else {
+        callback(null, result);
+      }
+    });
+  }
+
+  function insertArticle(connection, callback){
+    var sql = "insert into article(title, body, wdatetime, board_id) " +
+        "values(?, ?, ?, ?)";
+    async.eachSeries(sheet, function(item, cb){
+      connection.query(sql, [item.title, item.body, item.wdatetime, item.board_id], function(err, result){
+        if(err){
+          connection.release();
+          cb(err);
+        } else {
+          var result = {
+            "id" : result.insertId
+          }
+          cb(null, result);
+        }
+      });
+    }, function(err, result){
+      connection.release();
+      if(err){
+        callback(err);
+      } else {
+        callback(null, result);
+      }
+    });
+  }
+
+  function insertLeafhistory(connection, callback){
+    var sql = "insert into leafhistory(applydate, leaftype, chag) " +
+        "values(?, ?, ?, ?)";
+    async.eachSeries(sheet, function(item, cb){
+      connection.query(sql, [item.title, item.body, item.wdatetime, item.board_id], function(err, result){
+        if(err){
+          connection.release();
+          cb(err);
+        } else {
+          var result = {
+            "id" : result.insertId
+          }
+          cb(null, result);
+        }
+      });
+    }, function(err, result){
+      connection.release();
+      if(err){
+        callback(err);
+      } else {
+        callback(null, result);
+      }
+    });
+  }
+
   function insertBoard(connection, callback) {
     var resultArr = [];
     async.eachSeries(sheet, function (item, callback) {
-      var sql = "insert into board(name)" +
-        "values(?)"
+      var sql = "insert into board(name) " +
+        "values(?)";
       connection.query(sql, [item.name], function (err, result) {
         if (err) {
+          connection.release();
           var err = new Error('Board 데이터 생성에 실패하였습니다.');
         } else {
           var result = {
@@ -118,6 +225,7 @@ router.get('/', function(req, res, next) {
       var filepath = path.join(__dirname, '../uploads/', item.picture)
       fs.stat(filepath, function (err, stats) { //경로에 파일이 있는지 확인한다.
         if (err) {
+          connection.release();
           console.log('요청하신 파일' + item.picture + '이(가) 존재하지 않습니다.');
           callback(null);
         } else {
@@ -141,6 +249,7 @@ router.get('/', function(req, res, next) {
             })
             .send(function (err, data) {
               if (err) {
+                connection.release();
                 console.log(err);
                 callback(err);
               } else {
@@ -151,8 +260,8 @@ router.get('/', function(req, res, next) {
                 var sql = "insert into greenitems(name, description, price, picture, sdate, edate) " +
                   "values (?, ?, ?, ?, ?, ?)";
                 connection.query(sql, [item.name, item.description, item.price, location, item.sdate, item.edate], function (err, result) {
+                  connection.release();
                   if (err) {
-                    connection.release();
                     console.log('왜? 애러남?');
                     callback(err);
                   } else {
@@ -167,11 +276,9 @@ router.get('/', function(req, res, next) {
       });
     }, function (err) {
         if (err) {
-          connection.release();
           console.log("fail!!!");
           callback(err);
         } else {
-          connection.release();
           console.log("success!!!");
           callback(null, resultArr);
         }
@@ -184,7 +291,7 @@ router.get('/', function(req, res, next) {
     async.eachSeries(sheet, function (item, callback) {
       var location = "";
       var mimeType = mime.lookup(item.originalfilename);
-      var filepath = path.join(__dirname, '../uploads/photos', item.originalfilename)
+      var filepath = path.join(__dirname, '../uploads/photos', item.originalfilename);
       fs.stat(filepath, function (err, stats) { //경로에 파일이 있는지 확인한다.
         if (err) {
           console.log('요청하신 파일' + item.originalfilename + '이(가) 존재하지 않습니다.');
@@ -240,7 +347,6 @@ router.get('/', function(req, res, next) {
         console.log("fail!!!");
         callback(err);
       } else {
-        connection.release();
         console.log("success!!!");
         callback(null, resultArr);
       }
@@ -248,22 +354,14 @@ router.get('/', function(req, res, next) {
   }
 
 
-
-
+  var count = 0;
+  console.log("test : " + workbook.SheetNames.length);
   async.eachSeries(workbook.SheetNames, function (item, callback) {
+    count++;
     var sheet_name = item;
+    console.log("test test" + sheet_name);
     var worksheet = workbook.Sheets[sheet_name];
     sheet = XLSX.utils.sheet_to_json(worksheet);
-
-    if (sheet_name==="iparty"){
-      async.waterfall([getConnection, generateSalt, insertIparty], function(err, result){
-        if(err){
-          callback(err);
-        } else {
-          callback(null, result);
-        }
-      })
-    }
 
     if (sheet_name === "board") {
       async.waterfall([getConnection, insertBoard], function (err, result) {
@@ -273,6 +371,14 @@ router.get('/', function(req, res, next) {
           callback(null);
         }
       });
+    } else if (sheet_name==="iparty"){
+      async.waterfall([getConnection, generateSalt, insertIparty], function(err, result){
+        if(err){
+          callback(err);
+        } else {
+          callback(null, result);
+        }
+      })
     } else if (sheet_name === "greenitems") {
       async.waterfall([getConnection, insertGreenItems], function (err, result) {
         if (err) {
@@ -291,11 +397,22 @@ router.get('/', function(req, res, next) {
           callback(null);
         }
       });
+    } else if (sheet_name === "daddress") {
+      async.waterfall([getConnection, insertDaddress], function (err, result){
+        if (err) {
+          callback(err);
+        } else {
+          callback(null, result);
+        }
+      });
     }
+    console.log("반복 : " + count);
   }, function (err) {
     if (err) {
+      console.log("실패 : " + count);
       next(err);
     } else {
+      console.log("성공 : " + count);
       var success = "insert가 성공하였습니다.";
       res.json(success);
     }
