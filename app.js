@@ -14,7 +14,7 @@ require('./config/passportconfig')(passport); //passport를 configuration
 
 
 var accessterms = require('./routes/accessterms');
-var bell = require('./routes/bell');
+var sympathy = require('./routes/sympathy');
 var faqs = require('./routes/faqs');
 var greenplayer = require('./routes/greenplayer');
 var greenspace = require('./routes/greenspace');
@@ -104,7 +104,7 @@ app.use('/members', members);
 
 app.use('/orders', orders);
 app.use('/receipt', receipt);
-app.use('/bells/me', bell);
+app.use('/sympathy', sympathy);
 
 
 app.use('/mystories', mystory);
