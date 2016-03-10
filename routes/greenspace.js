@@ -531,7 +531,7 @@ router.put('/:ediaryId/replies/:replyId', isLoggedIn, function(req, res, next) {
 
 
     function compareUser(connection, callback) {
-        var sql = "SELECT * FROM greendb.reply " +
+        var sql = "SELECT * FROM reply " +
                   "where iparty_id = ? and ediary_id = ? and id = ?";
         connection.query(sql, [req.user.id, ediary_id, reply_id], function (err, results) {
             if(err) {

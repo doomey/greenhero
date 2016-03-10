@@ -61,7 +61,7 @@ module.exports = function(passport) {
     //
     //    function selectOrCreateUser(connection) {
     //        var select = "select id, nickname, google_email, google_name, google_photo "+
-    //                      "from greendb.iparty "+
+    //                      "from iparty "+
     //                      "where google_id = ?";
     //        connection.query(select, [profile.id], function(err, results) {
     //            if(err) {
@@ -69,7 +69,7 @@ module.exports = function(passport) {
     //                callback(err);
     //            } else {
     //                if(results.length === 0) {
-    //                    var insert = "insert into greendb.iparty(nickname, google_id, google_token, google_email, google_name, totalleaf) "+
+    //                    var insert = "insert into iparty(nickname, google_id, google_token, google_email, google_name, totalleaf) "+
     //                                  "values(?, ?, ?, ?, ?, ?)";
     //                    connection.query(insert, [profile.displayName, profile.id, accessToken, profile.emails[0], profile.displayName, profile.photos[0]], function(err, result) {
     //                        connection.release();
@@ -97,7 +97,7 @@ module.exports = function(passport) {
     //                        };
     //                        callback(null, user);
     //                    } else {
-    //                        var update = "update greendb.iparty "+
+    //                        var update = "update iparty "+
     //                                      "set google_token = ?, "+
     //                                      "    google_email = ?, "+
     //                                      "    google_name = ? "+

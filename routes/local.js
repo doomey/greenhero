@@ -59,7 +59,7 @@ router.post('/signup', function(req, res, next) {
       //2. 유저 select
       function selectIparty(connection, callback) {
          var select = "select id "+
-                      "from greendb.iparty "+
+                      "from iparty "+
                       "where username = ?";
          connection.query(select, [username], function(err, results) {
             if(err) {
@@ -99,7 +99,7 @@ router.post('/signup', function(req, res, next) {
 
       //5. insert
       function insertIparty(connection, hashPassword, callback) {
-         var insert = "insert into greendb.iparty(username, hashpassword, partytype) "+
+         var insert = "insert into iparty(username, hashpassword, partytype) "+
                       "values(?, ?, 1)";
          connection.query(insert, [username, hashPassword], function(err, result) {
             if(err) {

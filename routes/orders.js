@@ -59,7 +59,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                              //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8), " +
                              sqlAes.decrypt("phone") +
                              "totalleaf "+
-                             "from greendb.iparty "+
+                             "from iparty "+
                              "where id = ?";
                 connection.query(select, [req.user.id], function(err, results) {
                     if(err) {
@@ -104,7 +104,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     //1. greenitems테이블에서 물품id별로 select
                     function selectGreenitems(callback) {
                         var select = "select id, name, picture, price "+
-                                     "from greendb.greenitems "+
+                                     "from greenitems "+
                                      "where id in (?)";
                         connection.query(select, [iid], function(err, results) {
                             if(err) {
@@ -141,7 +141,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     //2. orders테이블에 insert -> 물품의 총 가격이 totalleaf보다 높으면 rollback
                     function insertOrders(message, TP, callback) {
                         //sqlAes.set(connection, serverKey);
-                        var insert =  "insert into greendb.orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
+                        var insert =  "insert into orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
                                       //"values(?, date(now()), ?, ?, ?, ?, ?, ?)";
                                       "values(?, date(now()), " +
                                       sqlAes.encrypt(6)
@@ -166,7 +166,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                     next(err);
                                 } else {
                                     //iparty테이블의 사용자의 totalleaf를 totalleaf-TP로 update
-                                    var update = "update greendb.iparty "+
+                                    var update = "update iparty "+
                                                  "set totalleaf = ? "+
                                                  "where id = ?";
                                     connection.query(update, [(totalleaf-TP), req.user.id], function(err) {
@@ -186,7 +186,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     function insertOrderdetails(message, orderId, TP, callback) {
                         var index = 0;
                         async.each(iid, function (element, callback) {
-                            var insert = "insert into greendb.orderdetails(order_id, quantity, greenitems_id) " +
+                            var insert = "insert into orderdetails(order_id, quantity, greenitems_id) " +
                                 "values(?, ?, ?)";
                             connection.query(insert, [orderId, qt[index], element], function (err, result) {
                                 if (err) {
@@ -210,7 +210,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     }
                     //4. leafhistory테이블에서 총 구매량insert
                     function insertLeafhistory(message, TP, callback) {
-                        var insert = "insert into greendb.leafhistory(applydate, leaftype, changedamount, iparty_id) "+
+                        var insert = "insert into leafhistory(applydate, leaftype, changedamount, iparty_id) "+
                                      "values(date(now()), 0, ?, ?)";
                         connection.query(insert, [TP, req.user.id], function(err, result) {
                             if(err) {
@@ -270,7 +270,7 @@ router.post('/setaddress', function(req, res, next) {
         }
 
         function insertDaddress(connection, callback) {
-            var insert =  "insert into greendb.daddress(ad_code, iparty_id, name, receiver, phone, add_phone, address) "+
+            var insert =  "insert into daddress(ad_code, iparty_id, name, receiver, phone, add_phone, address) "+
                           "values(?, ?, " +
                           sqlAes.encrypt(5)
                           //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +

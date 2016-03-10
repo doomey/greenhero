@@ -26,7 +26,7 @@ router.get('/', function(req, res, next){
 
     function selectArticles(connection, callback){
         var sql = "SELECT id, title, body, date_format(CONVERT_TZ(wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', board_id " +
-            "FROM greendb.article " +
+            "FROM article " +
             "WHERE board_id = ? " +
             "order by id desc " +
             "LIMIT ? OFFSET ?";
@@ -97,7 +97,7 @@ router.get('/:noticeid', function(req, res, next) {
    //selectNotice
    function selectNotice(connection, callback) {
       var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
-                    "from greendb.article "+
+                    "from article "+
                     "where board_id = 1 and id = ?";
       connection.query(select, [noticeid], function(err, results) {
          connection.release();

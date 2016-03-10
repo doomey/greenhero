@@ -64,7 +64,7 @@ router.post('/', function(req, res, next) {
 
                      function insertPhotos(connection, callback) {
                         if(bg===1){
-                           var insert = "insert into greendb.background(name, path) "+
+                           var insert = "insert into background(name, path) "+
                                "values(?, ?)";
                            connection.query(insert, [file.name, data.Location], function(err, result) {
                               connection.release();
@@ -75,7 +75,7 @@ router.post('/', function(req, res, next) {
                               }
                            });
                         } else {
-                           var insert = "insert into greendb.photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
+                           var insert = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
                                "values(?, now(), ?, ?, ?, 1, 1)";
                            connection.query(insert, [data.Location, file.name, path.basename(file.path), (path.extname(file.name)).replace('.', ''), 1, 1], function(err, result) {
                               connection.release();
@@ -148,7 +148,7 @@ router.post('/', function(req, res, next) {
 
                   function insertPhotos(connection, callback) {
                      if(bg===1){
-                        var insert = "insert into greendb.background(name, path) "+
+                        var insert = "insert into background(name, path) "+
                             "values(?, ?)";
                         connection.query(insert, [file.name, data.Location], function(err, result) {
                            connection.release();
@@ -159,7 +159,7 @@ router.post('/', function(req, res, next) {
                            }
                         });
                      } else {
-                        var insert = "insert into greendb.photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
+                        var insert = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) "+
                             "values(?, now(), ?, ?, ?, 1, 1)";
                         connection.query(insert, [data.Location, file.name, path.basename(file.path), (path.extname(file.name)).replace('.', ''), 1, 1], function(err, result) {
                            connection.release();

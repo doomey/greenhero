@@ -28,7 +28,7 @@ exports.push = function() {
    function selectIparty(connection, callback) {
 
       var select = "select registration_token, date_format(CONVERT_TZ(now(),'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as time " +
-         "from greendb.iparty "+
+         "from iparty "+
          "where nickname = ?";
       connection.query(select, [receivers], function(err, results) {
          connection.release();

@@ -36,7 +36,7 @@ router.get('/', isLoggedIn, function(req, res, next) {
 
         function getTotal(connection, callback) {
             var select = "select count(*) as cnt "+
-                          "from greendb.orders";
+                          "from orders";
             connection.query(select, [], function(err, results) {
                 if(err) {
                     connection.release();
@@ -48,8 +48,8 @@ router.get('/', isLoggedIn, function(req, res, next) {
         }
         function selectOrders(cnt, connection, callback) {
             var select = "select o.id as id, g.name as name, g.picture as picture, g.price as price, od.quantity as quantity, (g.price * od.quantity) as iprice "+
-                         "from greendb.orders o join greendb.orderdetails od on (o.id = od.order_id) "+
-                         "join greendb.greenitems g on (od.greenitems_id = g.id) "+
+                         "from orders o join orderdetails od on (o.id = od.order_id) "+
+                         "join greenitems g on (od.greenitems_id = g.id) "+
                          "where iparty_id = ? " +
                          "order by o.id asc limit ? offset ?";
             connection.query(select, [req.user.id, limit, offset], function(err, results) {

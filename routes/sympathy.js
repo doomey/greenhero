@@ -29,7 +29,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
       var articleid = parseInt(req.body.articleid);
 
       var select = "SELECT e.id as id, e.heart as heart, i.nickname as nickname "+
-                    "FROM greendb.e_diary e join greendb.iparty i on (e.iparty_id = i.id) "+
+                    "FROM e_diary e join iparty i on (e.iparty_id = i.id) "+
                     "where e.id = ?";
       connection.query(select, [articleid], function(err, results) {
          if(err) {
@@ -42,7 +42,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
    }
    //update greenspace
    function updateGreenspace(info, connection, callback) {
-      var update = "update greendb.e_diary "+
+      var update = "update e_diary "+
                    "set heart = ? "+
                    "where id = ?";
       connection.query(update, [info.heart + 1, info.id], function(err, result) {

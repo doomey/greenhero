@@ -66,7 +66,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                          "d.id as id, " +
                          "d.receiver as receiver, " +
                          "d.phone as phone, d.add_phone as addphone, d.ad_code as adcode, d.address as address "+
-                         "from greendb.iparty i join " +
+                         "from iparty i join " +
                          "(select " +
                          sqlAes.decrypt("receiver") +
                          sqlAes.decrypt("phone") +
@@ -77,9 +77,9 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                          //"convert(aes_decrypt(add_phone, unhex(" + connection.escape(serverKey) + ")) using utf8) as adph, " +
                          //"convert(aes_decrypt(address, unhex(" + connection.escape(serverKey) + ")) using utf8) as add, " +
                          "id, ad_code, iparty_id "+
-                          "from greendb.daddress "+
+                          "from daddress "+
                           "where iparty_id = 1 and id = (select max(id) "+
-                          "                              from greendb.daddress "+
+                          "                              from daddress "+
                           "                              where iparty_id = 1)) d "+
                           "                       on (i.id = d.iparty_id)";
             connection.query(select, [req.user.id], function(err, results) {
@@ -110,7 +110,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
 
         function selectLeafhistory(message, connection, callback) {
             var select = "select sum(changedamount) as chdamt "+
-                         "from greendb.leafhistory "+
+                         "from leafhistory "+
                          "where leaftype = 1 and iparty_id = ? and applydate = date(now())";
             connection.query(select, [req.user.id], function(err, results) {
                 connection.release();
@@ -154,7 +154,7 @@ router.put('/me', isLoggedIn, function(req, res, next) {
         }
 
         function updateIparty(connection, callback) {
-            var update = "update greendb.iparty "+
+            var update = "update iparty "+
                 "set nickname = ? "+
                 "where id = ?";
             connection.query(update, [nickname, req.user.id], function(err, result) {
@@ -209,7 +209,7 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
 
         function selectLeafhistory(connection, callback) {
             var select = "select id, date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', leaftype, changedamount "+
-                          "from greendb.leafhistory "+
+                          "from leafhistory "+
                           "where iparty_id = ? limit ? offset ?";
             connection.query(select, [req.user.id, limit, offset], function(err, results) {
                 connection.release();
@@ -270,7 +270,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
 
     function selectCartAndGreenitems(connection, callback) {
         var select = "SELECT c.id as cartId, greenitems_id, i.picture as picture, i.name as name, i.price as price, c.quantity as quantity, (c.quantity * i.price) as iprice "+
-                     "FROM greendb.cart c join greendb.greenitems i "+
+                     "FROM cart c join greenitems i "+
                      "                    on (c.greenitems_id = i.id) "+
                      "where iparty_id = ?";
         connection.query(select, [req.user.id], function(err, results) {
@@ -353,7 +353,7 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
     function insertCart(connection, callback) {
         var index = 0;
         async.each(iid, function(element, callback) {
-            var insert = "insert into greendb.cart(greenitems_id, iparty_id, quantity) "+
+            var insert = "insert into cart(greenitems_id, iparty_id, quantity) "+
                 "values(?, ?, ?)";
             connection.query(insert, [element, req.user.id, qt[index]], function(err, result) {
                 if(err) {
@@ -425,7 +425,7 @@ router.put('/me/baskets', function(req, res, next) {
         if (qt[index] !== 0) {
             async.each(cid, function(element, callback) {
                 //update
-                var update = "update greendb.cart " +
+                var update = "update cart " +
                     "set quantity = ? " +
                     "where id = ?";
                 connection.query(update, [qt[index], element], function (err, result) {
@@ -448,7 +448,7 @@ router.put('/me/baskets', function(req, res, next) {
             index = 0;
         } else {
             //delete
-            var deletequery = "delete from greendb.cart " +
+            var deletequery = "delete from cart " +
                 "where id in (?)";
             connection.query(deletequery, [cid], function (err, result) {
                 connection.release();
