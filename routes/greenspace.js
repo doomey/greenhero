@@ -39,11 +39,12 @@ router.get('/', function(req, res, next) {
     var offset = parseInt((page - 1) * 10);
 
     function selectGreenspace(connection, callback) {
-        var sql = "SELECT e.id as id, e.title as title, e.heart as heart, ifnull(r.rAmount,0) as rAmount, " +
-                         "b.path as backgroundUrl, e.content as content, p.photourl as photourl " +
+        var sql = "SELECT e.id as id, e.title as title, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
+                         "e.content as content, p.photourl as photourl " +
                   "FROM e_diary e left join (select ediary_id, sum(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
-                  "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-                  "left join (select id, path from background) b on(e.background_id = b.id) order by id desc limit ? offset ?";
+                                 "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
+                                 "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
+                  "order by id desc limit ? offset ?";
         connection.query(sql, [limit, offset], function (err, results) {
           connection.release();
             if (err) {
@@ -99,12 +100,12 @@ router.get('/:ediaryId', function(req, res, next) {
   function selectGreenspace(connection, callback) {
     var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, " +
                      "date_format(CONVERT_TZ(e.wdatetime, \'+00:00\', \'+9:00\'), \'%Y-%m-%d %H:%i:%s\') as wtime," +
-                     "e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, " +
+                     "e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
                      "e.content as content, p.photourl as photourl " +
               "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
                         "left join (select ediary_id, sum(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
                         "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-                        "left join (select id, path from background) b on(e.background_id = b.id) " +
+                        "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
               "where e.id = ?";
     connection.query(sql, [ediaryId], function (err, results) {
       if (err) {
@@ -120,11 +121,11 @@ router.get('/:ediaryId', function(req, res, next) {
 
   function resentGreenspace(connection, results, callback) {
     var sql = "SELECT e.id as id, e.title as title, " +
-                     "b.path as backgroundUrl, " +
+                     "b.photourl as backgroundUrl, " +
                      "p.photourl as thumbnail " +
               "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
                         "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-                        "left join (select id, path from background) b on(e.background_id = b.id) " +
+                        "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
               "order by id desc limit 6 offset 0";
     connection.query(sql, function (err, resent) {
       connection.release();
