@@ -152,7 +152,7 @@ module.exports = function(passport) {
             var select = "select id, username, hashpassword, nickname, google_name, " +
                          sqlAes.decrypt("google_email", true) +
                          //"convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
-                         "from greendb.iparty " +
+                         "from iparty " +
                          "where username = ?";
             connection.query(select, [username], function(err, results) {
                 connection.release();
