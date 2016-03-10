@@ -4,13 +4,13 @@ var async = require('async');
 var gcm = require('node-gcm');
 
 var user;
-var message;
+var inputMessage;
 var receivers;
 
 exports.set = function(sender, receiver, msg) {
    user = sender;
    receivers = receiver
-   message = msg || "공감하였습니다!";
+   inputMessage = msg || "공감하였습니다!";
 }
 
 exports.push = function() {
@@ -42,11 +42,6 @@ exports.push = function() {
    //
    function sendMessage(info, callback) {
 
-      var server_access_key = "AIzaSyADRF0g8ms7lVksTmV8L0Ln5r76eMGdaS8";
-      var sender = new gcm.Sender(server_access_key);
-      var registrationIds = [];
-      registrationIds.push(info.registration_token);
-
       var message = new gcm.Message({
          "collapseKey": 'demo',
          "delayWhileIdle": true,
@@ -57,6 +52,17 @@ exports.push = function() {
             "date": info.time
          }
       });
+
+      message.addNotification({
+         title: '공감',
+         body: user + '님이 ' + inputMessage,
+         icon: 'ic_launcher'
+      });
+
+      var server_access_key = "AIzaSyADRF0g8ms7lVksTmV8L0Ln5r76eMGdaS8";
+      var sender = new gcm.Sender(server_access_key);
+      var registrationIds = [];
+      registrationIds.push(info.registration_token);
 
       sender.send(message, registrationIds, 4, function(err, result) {
          if(err) {
