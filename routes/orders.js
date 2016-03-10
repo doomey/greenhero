@@ -295,7 +295,7 @@ router.post('/setaddress', function(req, res, next) {
         }
         async.waterfall([getConnection, insertDaddress], function(err, message) {
             if(err) {
-                err.code = "err016"
+                err.code = "err016";
                 err.message = "주소 등록에 실패하였습니다...";
                 next(err);
             } else {

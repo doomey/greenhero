@@ -41,9 +41,9 @@ function isLoggedIn(req, res, next) {
 router.get('/', isLoggedIn, function (req, res, next) {
     var ediary_id = 0;
     var iparty_id = parseInt(req.user.id);
-   var page = parseInt(req.query.page);
-   page = (isNaN(page))? 1 : page;
-   page = (page < 1)? 1 : page;
+    var page = parseInt(req.query.page);
+    page = (isNaN(page))? 1 : page;
+    page = (page < 1)? 1 : page;
 
     var limit = 10;
     var offset = parseInt((page - 1) * 10);
@@ -79,7 +79,7 @@ router.get('/', isLoggedIn, function (req, res, next) {
                     "title": results[i].title,
                     "wtime": results[i].wtime,
                     "heart": results[i].heart,
-                    "rAmount": results[i].rAmount,
+                    "rAmount": results[i].rAmount
                 });
             }
             var result = {
