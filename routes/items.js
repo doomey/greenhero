@@ -25,9 +25,10 @@ router.get('/', function(req, res, next){
     }
 
     function selectItems(connection, callback){
-        var sql = "SELECT id, name, picture, star, price " +
-            "from greenitems " +
-            "limit ? offset ?";
+        var sql = "SELECT i.id, i.name, p.photourl, i.star, i.price " +
+                  "FROM greenitems i " +
+                  "JOIN photos p ON (p.refer_type=3 AND p.refer_id = i.id) " +
+                  "limit ? offset ?";
         connection.query(sql, [limit, offset], function(err, results){
             connection.release();
             if(err){
@@ -39,7 +40,7 @@ router.get('/', function(req, res, next){
                         list.push({
                             "id" : element.id,
                             "name": element.name,
-                            "picture": element.picture,
+                            "picture": element.photourl,
                             "star" : element.star,
                             "price": element.price
                         });
@@ -99,9 +100,10 @@ router.get('/:itemsId', function(req, res, next){
     }
 
     function selectItems(connection, callback){
-        var sql = "SELECT id, name, picture, star, price, tquantity, description " +
-                  "from greenitems " +
-                  "where id = ? " +
+        var sql = "SELECT i.id, i.name, p.photourl, i.star, i.price, i.tquantity, i.description " +
+                  "FROM greenitems i " +
+                  "JOIN photos p ON (p.refer_type=3 AND p.refer_id = i.id) " +
+                  "WHERE i.id = ? " +
                   "limit ? offset ?";
         connection.query(sql, [itemsId, limit, offset], function(err,results){
             connection.release();
