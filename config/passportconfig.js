@@ -8,7 +8,6 @@ sqlAes.setServerKey(serverKey);
 
 module.exports = function(passport) {
     passport.serializeUser(function(user, done) {
-       console.log('유저아이디' , user.id);
         done(null, user.id);
     });
 
@@ -47,7 +46,6 @@ module.exports = function(passport) {
         "clientID" : GoogleConfig.google.appId,
         "passReqToCallback" : true
     }, function(req, parseToken, googleId, done) {
-       console.log('파스토큰', parseToken);
 
        function getConnection(callback) {
           pool.getConnection(function(err, connection) {
@@ -95,7 +93,6 @@ module.exports = function(passport) {
                          "name" : results[0].nickname,
                          "nickname" : results[0].nickname
                       };
-                      console.log('유저', user);
                       callback(null, user);
                    } else {
                       var update = "update iparty "+

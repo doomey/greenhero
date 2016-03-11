@@ -14,7 +14,6 @@ function isLoggedIn(req, res, next) {
 
 router.get('/', isLoggedIn, function(req, res, next) {
     if(req.secure) {
-        console.log('들어옴');
         var page = parseInt(req.query.page);
         page = isNaN(page)? 1 : page;
         page = (page<1)? 1 : page;
@@ -66,7 +65,6 @@ router.get('/', isLoggedIn, function(req, res, next) {
                             "items" : []
                         }
                     };
-                    console.log(message);
                     results.forEach(function(item) {
                         message.result.items.push({
                             "id" : item.gid,
@@ -77,7 +75,6 @@ router.get('/', isLoggedIn, function(req, res, next) {
                             "iPrice" : item.iprice
                         });
                     });
-                    console.log(message);
                     callback(null, message);
                 }
             });

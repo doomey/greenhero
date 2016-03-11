@@ -89,7 +89,6 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                          "where iparty_id = ? " +
                          "order by id desc limit 1 ";
             connection.query(select, [req.user.id], function(err, results) {
-                console.log('리저츠', results);
                 if(err) {
                     connection.release();
                     callback(err);
@@ -187,7 +186,6 @@ router.put('/me', isLoggedIn, function(req, res, next) {
 
 router.get('/me/leafs', isLoggedIn, function(req, res, next) {
     if(req.secure) {
-        console.log('들어옴');
         var page = parseInt(req.query.page);
         page = isNaN(page)? 1:page;
         page = (page < 1)? 1:page;
@@ -335,8 +333,6 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
             qt.push(parseInt(item));
         });
     }
-
-    console.log(iid);
     //커넥션
     function getConnection(callback) {
         pool.getConnection(function(err, connection) {

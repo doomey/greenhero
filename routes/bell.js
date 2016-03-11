@@ -6,11 +6,30 @@ var gcm = require('node-gcm');
 var user;
 var inputMessage;
 var receivers;
+var type;
+var articleid;
+var noti;
 
-exports.set = function(sender, receiver, msg) {
+exports.set = function(sender, receiver, inputType, id) {
+   type = inputType;
    user = sender;
-   receivers = receiver
-   inputMessage = msg || "공감하였습니다!";
+   receivers = receiver;
+   articleid = id;
+
+   if(inputType === "sympathy") {
+      noti = {
+         title: '공감이 되었습니다.',
+         body: user + "님이 공감하였습니다!",
+         icon: 'pushLike' //안드로이드 리소스에 집어넣을것
+      };
+   }
+   else if(inputType === "reply") {
+      noti = {
+         title: '댓글이 달렸습니다.',
+         body: user + "님이 댓글을 남겼습니다!",
+         icon: 'pushComment'
+      };
+   }
 }
 
 exports.push = function() {
@@ -47,17 +66,15 @@ exports.push = function() {
          "delayWhileIdle": true,
          "timeToLive": 3,
          "data" : {
+            "type" : type,
+            "articleId" : articleid,
             "who": user,
-            "message": message,
+            "message": inputMessage,
             "date": info.time
          }
       });
 
-      message.addNotification({
-         title: '공감',
-         body: user + '님이 ' + inputMessage,
-         icon: 'ic_launcher'
-      });
+      message.addNotification(noti);
 
       var server_access_key = "AIzaSyADRF0g8ms7lVksTmV8L0Ln5r76eMGdaS8";
       var sender = new gcm.Sender(server_access_key);
