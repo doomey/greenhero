@@ -23,7 +23,7 @@ function isLoggedIn(req, res, next) {
 //            console.log('members들어옴');
 //                if(err) {
 //                    err.code = "err001";
-//                    err.message = "연동에 실패하였습니다...";
+//                    err.message = "로그인에 실패하였습니다...";
 //                    next(err);
 //                } else {
 //                    req.logIn(user, function(err) {
@@ -66,7 +66,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                          "d.id as id, " +
                          "d.receiver as receiver, " +
                          "d.phone as phone, d.add_phone as addphone, d.ad_code as adcode, d.address as address "+
-                         "from iparty i join " +
+                         "from iparty i left join " +
                          "(select " +
                          sqlAes.decrypt("receiver") +
                          sqlAes.decrypt("phone") +
@@ -77,12 +77,13 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                          //"convert(aes_decrypt(add_phone, unhex(" + connection.escape(serverKey) + ")) using utf8) as adph, " +
                          //"convert(aes_decrypt(address, unhex(" + connection.escape(serverKey) + ")) using utf8) as add, " +
                          "id, ad_code, iparty_id "+
-                          "from daddress "+
-                          "where iparty_id = 1 and id = (select max(id) "+
-                          "                              from daddress "+
-                          "                              where iparty_id = 1)) d "+
-                          "                       on (i.id = d.iparty_id)";
-            connection.query(select, [req.user.id], function(err, results) {
+                         "from daddress "+
+                         "where iparty_id = ? and id = (select max(id) "+
+                         "                              from daddress "+
+                         "                              where iparty_id = ?)) d "+
+                         "                       on (i.id = d.iparty_id) " +
+                         "where i.id = ?";
+            connection.query(select, [req.user.id, req.user.id, req.user.id], function(err, results) {
                 if(err) {
                     connection.release();
                     callback(err);
