@@ -1,6 +1,6 @@
 module.exports = {
     "google" : {
-        "appId" : "368237859782-ipasveqlivp0ijcorej0t6mjttstkrok.apps.googleusercontent.com",
-        "appSecret" : "XRbUOQXp0gDeAKKwcnhnqeyD"
+        "appId" : "639066273635-6d69u53pek31u5n960u611809r7lqufc.apps.googleusercontent.com",
+        "appSecret" : "6k_HsEjrik1kwlvUq7zjoYp5"
     }
 }
