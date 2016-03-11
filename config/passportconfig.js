@@ -17,11 +17,8 @@ module.exports = function(passport) {
                 done(err);
             } else {
                 var sql = "select " +
-                          "id, username, google_id, google_name, nickname, " +
-                          //"convert(aes_decrypt(name, unhex(" + connection.escape(serverKey) + ")) using utf8) as na, " +
-                          //"convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
+                          "id, username, nickname, " +
                           sqlAes.decrypt("name") +
-                          sqlAes.decrypt("google_email", true) +
                           "from iparty " +
                           "where id = ?";
                 connection.query(sql, [id], function(err, results) {
@@ -58,9 +55,10 @@ module.exports = function(passport) {
        }
 
        function selectOrCreateUser(connection, callback) {
-          var select = "select id, nickname, google_email, google_name "+
-             "from iparty "+
-             "where google_id = ?";
+          var select = "select id, nickname, google_email, " +
+                       sqlAes.decrypt(google_name, true) +
+                       "from iparty "+
+                       "where google_id = ?";
           connection.query(select, [googleId], function(err, results) {
              if(err) {
                 connection.release();
