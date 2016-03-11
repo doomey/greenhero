@@ -44,7 +44,7 @@ router.get('/', function(req, res, next){
                             "type" : element.board_id,
                             "title" : element.title,
                             "date" : element.GMT9,
-                            "body" : element.body
+                            //"body" : element.body
                         });
                         callback(null);
                     }, function(err, result){
