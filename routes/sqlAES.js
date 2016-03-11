@@ -1,11 +1,7 @@
 var sk;
 
 var conn = pool.getConnection(function(err, connection) {
-   if(err) {
-
-   } else {
       conn = connection;
-   }
 });
 
 exports.setServerKey = function(serverKey) {

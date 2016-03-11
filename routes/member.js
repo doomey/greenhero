@@ -17,32 +17,31 @@ function isLoggedIn(req, res, next) {
     }
 }
 
-router.post('/', passport.authenticate('google-token'),
-    function(req, res, next) {
-        if(req.secure) {
-                if(err) {
-                    err.code = "err001";
-                    err.message = "연동에 실패하였습니다...";
-                    next(err);
-                } else {
-                    req.logIn(user, function(err) {
-                        if(err) {
-                            next(err);
-                        } else {
-                            res.json({
-                                "result" : {
-                                    "message" : "로그인이 완료 되었습니다. 감사합니다!"
-                                }
-                            });
-                        }
-                    });
-                }
-        } else {
-            var err = new Error("SSL/TLS Upgrade Required");
-            err.status = 426;
-            next(err);
-        }
-    });
+router.post('/login', function(req, res, next) {
+    if(req.secure) {
+        passport.authenticate('google-id-token', function(err, user, info) {
+            if(err) {
+                next(err);
+            } else if(!user){
+                var err = new Error('유효한 토큰이 아닙니다...');
+                err.status = 401;
+                next(err);
+            } else {
+                req.logIn(user, function(err) {
+                    if(err) {
+                        next(err);
+                    } else {
+                        res.json({"message" : user.nickname+"님 환영합니다!"});
+                    }
+                });
+            }
+        })(req, res, next);
+    } else {
+        var err = new Error('SSL/TLS Upgrade Required...');
+        err.status = 426;
+        next(err);
+    }
+});
 
 router.get('/me', isLoggedIn, function(req, res, next) {
     if(req.secure) {
@@ -60,48 +59,48 @@ router.get('/me', isLoggedIn, function(req, res, next) {
         }
 
         function selectIparty(connection, callback) {
-
-            var select = "select i.id, i.google_name as name, i.nickname as nickname, i.totalleaf as totalleaf, " +
-                         "d.id as id, " +
-                         "d.receiver as receiver, " +
-                         "d.phone as phone, d.add_phone as addphone, d.ad_code as adcode, d.address as address "+
-                         "from greendb.iparty i join " +
-                         "(select " +
-                         sqlAes.decrypt("receiver") +
-                         sqlAes.decrypt("phone") +
-                         sqlAes.decrypt("add_phone") +
-                         sqlAes.decrypt("address") +
-                         //"convert(aes_decrypt(receiver, unhex(" + connection.escape(serverKey) + ")) using utf8) as re, " +
-                         //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8) as ph, " +
-                         //"convert(aes_decrypt(add_phone, unhex(" + connection.escape(serverKey) + ")) using utf8) as adph, " +
-                         //"convert(aes_decrypt(address, unhex(" + connection.escape(serverKey) + ")) using utf8) as add, " +
-                         "id, ad_code, iparty_id "+
-                          "from greendb.daddress "+
-                          "where iparty_id = 1 and id = (select max(id) "+
-                          "                              from greendb.daddress "+
-                          "                              where iparty_id = 1)) d "+
-                          "                       on (i.id = d.iparty_id)";
+            var select = "select google_name, nickname, totalleaf " +
+                  "from iparty " +
+               "where id = ?";
             connection.query(select, [req.user.id], function(err, results) {
+                console.log('리저트', results);
                 if(err) {
                     connection.release();
                     callback(err);
                 } else {
                     var message = {
                         "result" : {
-                            "gName" : results[0].name,
+                            "gName" : results[0].google_name,
                             "nickname" : (!results[0].nickname)? results[0].name : results[0].nickname,
                             "totalLeaf" : results[0].totalleaf,
                             "todayLeaf" : 0,
                             "address" : {
-                                "dName" : results[0].receiver,
-                                "dPhone1" :results[0].phone,
-                                "dPhone2" : results[0].addphone,
-                                "dAdcode" : results[0].adcode,
-                                "dAddress" : results[0].address
                             }
                         }
                     };
-                    console.log('메세지', message);
+                    callback(null, message, connection);
+                }
+            });
+        }
+
+        function selectDaddress(message, connection, callback) {
+            var select ="SELECT "+ sqlAes.decrypt("receiver") + sqlAes.decrypt("phone") + "add_phone, " + "ad_code, " + sqlAes.decrypt("address", true) +
+                         "FROM daddress "+
+                         "where iparty_id = ? " +
+                         "order by id desc limit 1 ";
+            connection.query(select, [req.user.id], function(err, results) {
+                console.log('리저츠', results);
+                if(err) {
+                    connection.release();
+                    callback(err);
+                } else {
+                    message.result.address = {
+                        "gName" : results[0].receiver,
+                        "dPhone1" : results[0].phone,
+                        "dPhone2" : results[0].add_phone,
+                        "dAdcode" : results[0].ad_code,
+                        "dAddress" : results[0].address
+                    };
                     callback(null, message, connection);
                 }
             });
@@ -109,7 +108,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
 
         function selectLeafhistory(message, connection, callback) {
             var select = "select sum(changedamount) as chdamt "+
-                         "from greendb.leafhistory "+
+                         "from leafhistory "+
                          "where leaftype = 1 and iparty_id = ? and applydate = date(now())";
             connection.query(select, [req.user.id], function(err, results) {
                 connection.release();
@@ -122,7 +121,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
             });
         }
 
-        async.waterfall([getConnection, selectIparty, selectLeafhistory], function(err, message) {
+        async.waterfall([getConnection, selectIparty, selectDaddress, selectLeafhistory], function(err, message) {
             if(err) {
                 err.code = "err002";
                 err.message = "내 정보를 불러올 수 없습니다...";
@@ -153,7 +152,7 @@ router.put('/me', isLoggedIn, function(req, res, next) {
         }
 
         function updateIparty(connection, callback) {
-            var update = "update greendb.iparty "+
+            var update = "update iparty "+
                 "set nickname = ? "+
                 "where id = ?";
             connection.query(update, [nickname, req.user.id], function(err, result) {
@@ -192,7 +191,7 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
         var page = parseInt(req.query.page);
         page = isNaN(page)? 1:page;
         page = (page < 1)? 1:page;
-        var limit = 2;
+        var limit = 10;
         var offset = limit*(page-1);
 
         //1. getConnection, 2. leafhistory테이블 select
@@ -208,7 +207,7 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
 
         function selectLeafhistory(connection, callback) {
             var select = "select id, date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', leaftype, changedamount "+
-                          "from greendb.leafhistory "+
+                          "from leafhistory "+
                           "where iparty_id = ? limit ? offset ?";
             connection.query(select, [req.user.id, limit, offset], function(err, results) {
                 connection.release();
@@ -269,7 +268,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
 
     function selectCartAndGreenitems(connection, callback) {
         var select = "SELECT c.id as cartId, greenitems_id, i.picture as picture, i.name as name, i.price as price, c.quantity as quantity, (c.quantity * i.price) as iprice "+
-                     "FROM greendb.cart c join greendb.greenitems i "+
+                     "FROM cart c join greenitems i "+
                      "                    on (c.greenitems_id = i.id) "+
                      "where iparty_id = ?";
         connection.query(select, [req.user.id], function(err, results) {
@@ -352,7 +351,7 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
     function insertCart(connection, callback) {
         var index = 0;
         async.each(iid, function(element, callback) {
-            var insert = "insert into greendb.cart(greenitems_id, iparty_id, quantity) "+
+            var insert = "insert into cart(greenitems_id, iparty_id, quantity) "+
                 "values(?, ?, ?)";
             connection.query(insert, [element, req.user.id, qt[index]], function(err, result) {
                 if(err) {
@@ -424,7 +423,7 @@ router.put('/me/baskets', function(req, res, next) {
         if (qt[index] !== 0) {
             async.each(cid, function(element, callback) {
                 //update
-                var update = "update greendb.cart " +
+                var update = "update cart " +
                     "set quantity = ? " +
                     "where id = ?";
                 connection.query(update, [qt[index], element], function (err, result) {
@@ -447,7 +446,7 @@ router.put('/me/baskets', function(req, res, next) {
             index = 0;
         } else {
             //delete
-            var deletequery = "delete from greendb.cart " +
+            var deletequery = "delete from cart " +
                 "where id in (?)";
             connection.query(deletequery, [cid], function (err, result) {
                 connection.release();

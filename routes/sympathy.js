@@ -51,8 +51,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
             callback(err);
          } else {
             //push
-            console.log('닉네임: ', req.user);
-            bell.set(req.user.nickname, info.nickname);
+            bell.set(req.user.nickname, info.nickname, "sympathy", info.id);
             bell.push();
             callback(null, {"message" : info.nickname+"님에게 공감하였습니다."});
          }
