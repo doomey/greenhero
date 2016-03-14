@@ -46,7 +46,7 @@ router.get('/', isLoggedIn, function(req, res, next) {
             });
         }
         function selectOrders(cnt, connection, callback) {
-            var select = "select o.id as id, g.name as name, p.photourl as picture, g.price as price, od.quantity as quantity, (g.price * od.quantity) as iprice, g.id as gid "+
+            var select = "select o.id as id, o.date as date, g.name as name, p.photourl as picture, g.price as price, od.quantity as quantity, (g.price * od.quantity) as iprice, g.id as gid "+
                          "from orders o join orderdetails od on (o.id = od.order_id) "+
                          "join greenitems g on (od.greenitems_id = g.id) "+
                          "join photos p on (p.refer_type = 3 and p.refer_id = g.id)" +
@@ -68,6 +68,8 @@ router.get('/', isLoggedIn, function(req, res, next) {
                     results.forEach(function(item) {
                         message.result.items.push({
                             "id" : item.gid,
+                            "orderId" : item.id,
+                            "date" : item.date,
                             "name" : item.name,
                             "picture" : item.picture,
                             "price" : item.price,
