@@ -48,6 +48,8 @@ router.get('/me', isLoggedIn, function(req, res, next) {
     if(req.secure) {
         //오늘 획득 가능한 나뭇잎 양
         var todayleaf = 45;
+        var resentleaf = 0;
+        var totalleaf = 0;
 
         function getConnection(callback) {
             pool.getConnection(function(err, connection) {
@@ -57,6 +59,22 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                     callback(null, connection);
                 }
             })
+        }
+
+        function selectLeaf(connection, callback) {
+            var sql = "select sum(changedamount) as toleaf " +
+                      "from leafhistory " +
+                      "where iparty_id = ? and to_days(date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s')) = to_days(now())";
+            connection.query(sql, [req.user.id], function(err, results) {
+                 if (err) {
+                     connection.release();
+                     callback(err);
+                 } else {
+                     resentleaf = parseInt(results[0].toleaf);
+                     console.log("현재 오늘 얻은 나뭇잎 수 " + resentleaf);
+                     callback(null, connection);
+                 }
+            });
         }
 
         function selectIparty(connection, callback) {
@@ -70,14 +88,13 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                     connection.release();
                     callback(err);
                 } else {
+                    totalleaf = results[0].totalleaf;
                     var message = {
                         "result" : {
                             "gName" : results[0].google_name,
                             "nickname" : (!results[0].nickname)? results[0].name : results[0].nickname,
                             "totalLeaf" : results[0].totalleaf,
-                            "todayLeaf" : 0,
-                            "address" : {
-                            }
+                            "todayLeaf" : (todayleaf - resentleaf)
                         }
                     };
                     callback(null, message, connection);
@@ -85,14 +102,53 @@ router.get('/me', isLoggedIn, function(req, res, next) {
             });
         }
 
+        function controlLeafPhoto (message, connection, callback) {
+            var leafphotoId = 0;
+            if (todayleaf >= 1000) {
+                leafphotoId = 11;
+            } else if (todayleaf >= 900) {
+                leafphotoId = 10;
+            } else if (todayleaf >= 800) {
+                leafphotoId = 9;
+            } else if (todayleaf >= 700) {
+                leafphotoId = 8;
+            } else if (todayleaf >= 600) {
+                leafphotoId = 7;
+            } else if (todayleaf >= 500) {
+                leafphotoId = 6;
+            } else if (todayleaf >= 400) {
+                leafphotoId = 5;
+            } else if (todayleaf >= 300) {
+                leafphotoId = 4;
+            } else if (todayleaf >= 200) {
+                leafphotoId = 3;
+            } else if (todayleaf >= 100) {
+                leafphotoId = 2;
+            } else {
+                leafphotoId = 1;
+            }
+            var sql = "select photourl " +
+                      "from photos " +
+                      "where refer_type = 5 and refer_id = ?";
+            connection.query(sql, [leafphotoId], function (err, results) {
+                if (err) {
+                    connection.release();
+                    callback(err);
+                } else {
+                    message.result.treeUrl = results[0].photourl;
+                    callback(null, message, connection);
+                }
+            });
+        }
+
         function selectDaddress(message, connection, callback) {
-            var select ="SELECT "+ sqlAes.decrypt("receiver") + sqlAes.decrypt("phone") + "add_phone, " + "ad_code, " + sqlAes.decrypt("address", true) +
+            var select ="SELECT "+ sqlAes.decrypt("receiver") + sqlAes.decrypt("phone") + sqlAes.decrypt("add_phone") + "ad_code, " + sqlAes.decrypt("address", true) +
                          "FROM daddress "+
                          "where iparty_id = ? " +
                          "order by id desc limit 1 ";
             connection.query(select, [req.user.id], function(err, results) {
+                connection.release();
                 if(err) {
-                    connection.release();
                     callback(err);
                 } else {
                     message.result.address = {
@@ -102,27 +158,27 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                         "dAdcode" : results[0].ad_code,
                         "dAddress" : results[0].address
                     };
-                    callback(null, message, connection);
-                }
-            });
-        }
-
-        function selectLeafhistory(message, connection, callback) {
-            var select = "select sum(changedamount) as chdamt "+
-                         "from leafhistory "+
-                         "where leaftype = 1 and iparty_id = ? and applydate = date(now())";
-            connection.query(select, [req.user.id], function(err, results) {
-                connection.release();
-                if(err) {
-                    callback(err);
-                } else {
-                    message.result.todayLeaf = (todayleaf - (isNaN(results[0].chdamt)?0:results[0].chdamt));
                     callback(null, message);
                 }
             });
         }
 
-        async.waterfall([getConnection, selectIparty, selectDaddress, selectLeafhistory], function(err, message) {
+        //function selectLeafhistory(message, connection, callback) {
+        //    var select = "select sum(changedamount) as chdamt "+
+        //                 "from leafhistory "+
+        //                 "where leaftype = 1 and iparty_id = ? and applydate = date(now())";
+        //    connection.query(select, [req.user.id], function(err, results) {
+        //        connection.release();
+        //        if(err) {
+        //            callback(err);
+        //        } else {
+        //            message.result.todayLeaf = (todayleaf - (isNaN(results[0].chdamt)?0:results[0].chdamt));
+        //            callback(null, message);
+        //        }
+        //    });
+        //}
+
+        async.waterfall([getConnection, selectLeaf, selectIparty, controlLeafPhoto, selectDaddress], function(err, message) {
             if(err) {
                 err.code = "err002";
                 err.message = "내 정보를 불러올 수 없습니다...";
