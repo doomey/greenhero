@@ -9,6 +9,7 @@ var AWS = require('aws-sdk');
 var mime = require('mime');
 var s3Config = require('../config/s3Config');
 var logger = require('./logger');
+
 /* GET home page. */
 var a;
 var data = [];

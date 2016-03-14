@@ -1,5 +1,6 @@
 var async = require('async');
 var bcrypt = require('bcrypt');
+var LocalStrategy = require('passport-local').Strategy;
 var GoogleConfig = require('./googleConfig');
 var GoogleTokenStrategy = require('passport-google-id-token');
 var sqlAes = require('../routes/sqlAES.js');
@@ -18,7 +19,7 @@ module.exports = function(passport) {
             } else {
                 var sql = "select " +
                           "id, username, nickname, " +
-                          sqlAes.decrypt("name") +
+                          sqlAes.decrypt("name", true) +
                           "from iparty " +
                           "where id = ?";
                 connection.query(sql, [id], function(err, results) {
@@ -124,6 +125,81 @@ module.exports = function(passport) {
           }
        });
     })
-    );
+);
+
+  passport.use('local-login', new LocalStrategy({
+    usernameField: "username",
+    passwordField: "password",
+    passReqToCallback: true
+  }, function(req, username, password, done) {
+
+    //1. getConnection
+    function getConnection(callback) {
+      pool.getConnection(function(err, connection) {
+        if(err) {
+          callback(err);
+        } else {
+          callback(null, connection);
+        }
+      });
+    }
+    //2. selectpassword
+    function selectIparty(connection, callback) {
+      var select = "select id, username, hashpassword, nickname, google_name, " +
+        sqlAes.decrypt("google_email", true) +
+          //"convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
+        "from iparty " +
+        "where username = ?";
+      connection.query(select, [username], function(err, results) {
+        connection.release();
+        if(err) {
+          callback(err);
+        } else {
+          if(results.length === 0) {
+            var err = new Error('사용자가 존재하지 않습니다...');
+            callback(err);
+          } else {
+            var user = {
+              "id" : results[0].id,
+              "hashPassword" : results[0].hashpassword,
+              "email" : results[0].google_email,
+              "name" : results[0].google_name,
+              "nickname" : results[0].nickname
+            };
+            console.log('유저', user);
+            callback(null, user);
+          }
+        }
+      });
+    }
+
+    //3. compare
+    function compare(user, callback) {
+      bcrypt.compare(password, user.hashPassword, function(err, result) {
+        if(err) {
+          console.log('여기 됨');
+          callback(err);
+        } else {
+          if(result === true) {
+
+            callback(null, user);
+          } else {
+            callback(null, false);
+          }
+        }
+      })
+    }
+
+    async.waterfall([getConnection, selectIparty, compare], function(err, user) {
+      if(err) {
+        done(err);
+      } else {
+        delete user.hashPassword;
+        done(null, user);
+      }
+    });
+  }));
+
+
 
 }
