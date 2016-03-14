@@ -19,7 +19,6 @@ var faqs = require('./routes/faqs');
 var greenplayer = require('./routes/greenplayer');
 var greenspace = require('./routes/greenspace');
 // 중요!!! Loading router-level middleware modules 라우터 레벨 미들웨어 모듈을 로딩한다.
-var index = require('./routes/index');
 
 
 
@@ -43,19 +42,16 @@ var members = require('./routes/member');
 
 var orders = require('./routes/orders');
 var receipt = require('./routes/receipt');
-var excel2 = require('./routes/excel2');
-var totalexcel = require('./routes/totalexcel');
 
 var mystory = require('./routes/mystory');
 
-var migration = require('./routes/migration');
 
 var app = express();
 
 //로컬
 var local = require('./routes/local');
 
-var upload = require('./routes/uploading_photo');
+
 
 app.set('env', 'development');
 //app.set('env', 'production');
@@ -82,7 +78,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
 app.use(passport.session());
 // 중요!!! mapping mount point configuration. 마운트 포인트를 구성하면 된다.
-app.use('/', index);
 
 //공지사항, FAQ, 이용약관, 운영정책 라우팅 모듈을 특정 라우팅 경로에 등록
 app.use('/notices', notices);
@@ -112,11 +107,6 @@ app.use('/mystories', mystory);
 //로컬
 app.use('/local', local);
 
-app.use('/upload', upload);
-
-app.use('/migration', migration);
-app.use('/excel2', excel2);
-app.use('/totalexcel', totalexcel);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

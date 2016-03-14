@@ -54,7 +54,9 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
 
             function selectIparty(connection, callback) {
-                var select = "select google_id as gid, google_name as gname, google_email, " +
+                var select = "select google_id as gid, " +
+                             sqlAes.decrypt(google_name, true) +
+                             " as gname, google_email, " +
                              //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8), " +
                              sqlAes.decrypt("phone") +
                              "totalleaf "+

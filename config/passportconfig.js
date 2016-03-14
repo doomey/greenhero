@@ -66,9 +66,11 @@ module.exports = function(passport) {
                 callback(err);
              } else {
                 if(results.length === 0) {
-                   var insert = "insert into iparty(nickname, google_id, google_token, google_email, google_name, totalleaf, registration_token) "+
-                      "values(?, ?, ?, ?, ?, 0, ?)";
-                   connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, parseToken.payload.name, req.body.registration_id], function(err, result) {
+                   var insert = "insert into iparty(nickname, google_id, google_token, google_email, totalleaf, registration_token, google_name) "+
+                                "values(?, ?, ?, ?, ?, 0, " +
+                                "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")) " +
+                                ")";
+                   connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, req.body.registration_id, parseToken.payload.name], function(err, result) {
                       connection.release();
                       if(err) {
                          callback(err);
@@ -145,8 +147,8 @@ module.exports = function(passport) {
     }
     //2. selectpassword
     function selectIparty(connection, callback) {
-      var select = "select id, username, hashpassword, nickname, google_name, " +
-        sqlAes.decrypt("google_email", true) +
+      var select = "select id, username, hashpassword, nickname, google_email, " +
+        sqlAes.decrypt("google_name", true) +
           //"convert(aes_decrypt(google_email, unhex(" + connection.escape(serverKey) + ")) using utf8) as gemail " +
         "from iparty " +
         "where username = ?";

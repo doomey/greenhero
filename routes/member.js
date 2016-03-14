@@ -60,7 +60,8 @@ router.get('/me', isLoggedIn, function(req, res, next) {
         }
 
         function selectIparty(connection, callback) {
-            var select = "select google_name, nickname, totalleaf " +
+            var select = "select nickname, totalleaf, " +
+                    sqlAes.decrypt(google_name, true) +
                   "from iparty " +
                "where id = ?";
             connection.query(select, [req.user.id], function(err, results) {
