@@ -266,9 +266,12 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
     }
 
     function selectCartAndGreenitems(connection, callback) {
-        var select = "SELECT c.id as cartId, greenitems_id, i.picture as picture, i.name as name, i.price as price, c.quantity as quantity, (c.quantity * i.price) as iprice "+
-                     "FROM cart c join greenitems i "+
-                     "                    on (c.greenitems_id = i.id) "+
+        var select = "SELECT c.id as cartId, greenitems_id, p.photourl as picture, i.name as name, i.price as price, c.quantity as quantity, (c.quantity * i.price) as iprice " +
+                     "FROM cart c join greenitems i on (c.greenitems_id = i.id) " +
+                                 "join (select refer_id, photourl " +
+                                       "from photos " +
+                                       "where refer_type = 3) p " +
+                                 "on (i.id = p.refer_id) " +
                      "where iparty_id = ?";
         connection.query(select, [req.user.id], function(err, results) {
             if(err) {
