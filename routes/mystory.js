@@ -53,7 +53,7 @@ router.get('/', isLoggedIn, function (req, res, next) {
     function selectMystories(connection, callback) {
         var sql = "SELECT e.id as id, e.title as title, e.wdatetime as wtime, " +
                   "e.heart as heart, ifnull(r.rAmount,0) as rAmount " +
-                  "FROM e_diary e left join (select ediary_id, sum(ediary_id) as rAmount " +
+                  "FROM e_diary e left join (select ediary_id, count(ediary_id) as rAmount " +
                   "                          from reply group by ediary_id) r " +
                   "               on (e.id = r.ediary_id) " +
                   "WHERE e.iparty_id = ? order by id desc limit ? offset ?";
@@ -107,9 +107,9 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
           "e.content as content, p.photourl as photoUrl " +
           "FROM e_diary e join (select id, nickname from iparty) i " +
           "on(e.iparty_id = i.id) " +
-          "left join (select ediary_id, sum(ediary_id) as rAmount " +
-                     "from reply group by ediary_id) r " +
-          "on (e.id = r.ediary_id) " +
+          //"left join (select ediary_id, count(ediary_id) as rAmount " +
+          //           "from reply group by ediary_id) r " +
+          //"on (e.id = r.ediary_id) " +
           "left join (select refer_id, photourl from photos where refer_type = 1) p " +
           "on (e.id = p.refer_id) " +
           "left join (select refer_id, photourl from photos where refer_type = 4) b " +
