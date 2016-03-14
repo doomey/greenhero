@@ -41,7 +41,7 @@ router.get('/', function(req, res, next) {
     function selectGreenspace(connection, callback) {
         var sql = "SELECT e.id as id, e.title as title, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
                          "e.content as content, p.photourl as photourl " +
-                  "FROM e_diary e left join (select ediary_id, sum(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
+                  "FROM e_diary e left join (select ediary_id, count(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
                                  "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
                                  "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
                   "order by id desc limit ? offset ?";
@@ -103,11 +103,13 @@ router.get('/:ediaryId', function(req, res, next) {
                      "e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
                      "e.content as content, p.photourl as photourl " +
               "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
-                        "left join (select ediary_id, sum(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
+                        "left join (select ediary_id, count(id) as rAmount " +
+                                   "from reply " +
+                                   "where ediary_id = ?) r on (e.id = r.ediary_id)" +
                         "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
                         "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
               "where e.id = ?";
-    connection.query(sql, [ediaryId], function (err, results) {
+    connection.query(sql, [ediaryId, ediaryId], function (err, results) {
       if (err) {
         connection.release();
         callback(err);
@@ -189,7 +191,7 @@ router.get('/searching', function(req, res, next) {
                       "FROM e_diary e join (select id, nickname "+
                       "from iparty) i "+
                       "on(e.iparty_id = i.id) "+
-                      "left join (select ediary_id, sum(ediary_id) as rAmount "+
+                      "left join (select ediary_id, count(ediary_id) as rAmount "+
                       "from reply "+
                       "group by ediary_id) r "+
                       "on (e.id = r.ediary_id) "+
@@ -217,7 +219,7 @@ router.get('/searching', function(req, res, next) {
              "FROM e_diary e join (select id, nickname "+
              "from iparty) i "+
              "on(e.iparty_id = i.id) "+
-             "left join (select ediary_id, sum(ediary_id) as rAmount "+
+             "left join (select ediary_id, count(ediary_id) as rAmount "+
              "from reply "+
              "group by ediary_id) r "+
              "on (e.id = r.ediary_id) "+
@@ -245,7 +247,7 @@ router.get('/searching', function(req, res, next) {
              "FROM e_diary e join (select id, nickname "+
              "from iparty) i "+
              "on(e.iparty_id = i.id) "+
-             "left join (select ediary_id, sum(ediary_id) as rAmount "+
+             "left join (select ediary_id, count(ediary_id) as rAmount "+
              "from reply "+
              "group by ediary_id) r "+
              "on (e.id = r.ediary_id) "+
