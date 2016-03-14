@@ -3,6 +3,7 @@ var router = express.Router();
 var async = require('async');
 var passport = require('passport');
 var bcrypt = require('bcrypt');
+var logger = require('./logger');
 
 router.post('/login', function(req, res, next) {
    if(req.secure) {
@@ -32,7 +33,7 @@ router.post('/login', function(req, res, next) {
 
 router.post('/logout', function(req, res, next) {
 
-   console.log('유저아이디', req.session.userId);
+   logger.log('info', '유저아이디', req.session.userId);
    req.logOut();
 
    res.json({

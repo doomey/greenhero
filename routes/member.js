@@ -4,6 +4,7 @@ var async = require('async');
 var passport = require('passport');
 var gcm = require('node-gcm');
 var sqlAes = require('./sqlAES.js');
+var logger = require('./logger');
 
 sqlAes.setServerKey(serverKey);
 
@@ -63,7 +64,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                   "from iparty " +
                "where id = ?";
             connection.query(select, [req.user.id], function(err, results) {
-                console.log('리저트', results);
+                logger.log('info', "유저 검색결과 : " +  results);
                 if(err) {
                     connection.release();
                     callback(err);

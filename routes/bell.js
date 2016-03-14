@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var gcm = require('node-gcm');
+var logger = require('./logger');
 
 var user;
 var inputMessage;
@@ -85,7 +86,7 @@ exports.push = function() {
          if(err) {
             next(err);
          } else {
-            console.log(result);
+            logger.log('info', result);
          }
       });
 

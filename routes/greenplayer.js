@@ -4,6 +4,7 @@ var router = express.Router();
 var queryString = require('querystring');
 var async = require('async');
 var passport = require('passport');
+var logger = require('./logger');
 
 function isLoggedIn(req, res, next) {//
     if(!req.isAuthenticated()) {
@@ -172,7 +173,7 @@ router.post('/', isLoggedIn, function(req, res, next){
                                     callback(err);
                                 } else {
                                     tLeaf = results[0].tLeaf;
-                                    console.log("오늘 획득 한 총 나뭇잎 개수 : " + tLeaf);
+                                    logger.log('info', "오늘 획득 한 총 나뭇잎 개수 : " + tLeaf);
                                     callback(null, tLeaf);
                                 }
                             });
@@ -199,7 +200,7 @@ router.post('/', isLoggedIn, function(req, res, next){
                                         callback(err);
                                     } else {
                                         var leafId = result.insertId;
-                                        console.log("생성된 leaf_ID : " + leafId);
+                                        logger.log('info', "생성된 leaf_ID : " + leafId);
                                         callback(null);
                                     }
 
@@ -223,7 +224,7 @@ router.post('/', isLoggedIn, function(req, res, next){
                                     callback(err);
                                 } else {
                                     userLeaf = result[0].tLeaf;
-                                    console.log("사용자의 총 나뭇잎 개수 " + userLeaf);
+                                    logger.log('info', "사용자의 총 나뭇잎 개수 " + userLeaf);
                                     callback(null);
                                 }
                             })
@@ -247,7 +248,7 @@ router.post('/', isLoggedIn, function(req, res, next){
                                 } else {
                                     connection.commit();
                                     connection.release();
-                                    console.log("업데이트가 완료되었습니다.");
+                                    logger.log('info', "업데이트가 완료되었습니다.");
                                     callback(null);
                                 }
                             });
