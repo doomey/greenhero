@@ -55,13 +55,12 @@ exports.push = function() {
          if(err) {
             callback(err);
          } else {
-            callback(null, results[0]);
+            callback(null, results);
          }
       });
    }
    //
    function sendMessage(info, callback) {
-
       var message = new gcm.Message({
          "collapseKey": 'demo',
          "delayWhileIdle": true,
@@ -71,7 +70,7 @@ exports.push = function() {
             "articleId" : articleid,
             "who": user,
             "message": inputMessage,
-            "date": info.time
+            "date" : info.time
          }
       });
 
@@ -80,11 +79,11 @@ exports.push = function() {
       var server_access_key = "AIzaSyADRF0g8ms7lVksTmV8L0Ln5r76eMGdaS8";
       var sender = new gcm.Sender(server_access_key);
       var registrationIds = [];
-      registrationIds.push(info.registration_token);
+      registrationIds.push(/*info.registration_token*/"dijmJCe6Glo:APA91bGMulwXuthoCIIPdVztdGYExFGR4FZQ8s7pDgTbjEn5w6JDjkAXCk3QdYkLH4_1ejHf3vdsX7KSh-0zuWsqfA3wjjlxtjHp8IWGbtD1_ElWsBZmM5xGM3drJjcg5jtWwyZzrmzM");
 
       sender.send(message, registrationIds, 4, function(err, result) {
          if(err) {
-            next(err);
+            callback(err);
          } else {
             logger.log('info', result);
          }
