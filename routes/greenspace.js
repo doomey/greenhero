@@ -369,6 +369,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
     var userLeaf = 0;
     var replyId = 0;
     var receiver;
+    var exceed = 0;
 
     function selectWriter(connection, callback){
         var sql = "select iparty_id from e_diary where id = ?";
@@ -434,9 +435,11 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                         callback(err);
                     } else {
                         if (tLeaf >= 10) {
-                            connection.release();
-                            var err = {"message": "오늘의 나뭇잎 충전량을 초과하였습니다."};
-                            next(err);
+                            //connection.release();
+                            //var err = {"message": "오늘의 나뭇잎 충전량을 초과하였습니다."};
+                            //next(err);
+                            exceed = 1;
+                            callback(null);
                         } else {
                             var sql = "insert into leafhistory (applydate, leaftype, changedamount, iparty_id) " +
                                 "values (now(), 2, 1, ?)";
@@ -516,12 +519,18 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
     }
 
     async.waterfall([getConnection, selectWriter, insertReply, insertMystory], function (err, results) {
-        if(err){
+        if (err) {
             var err = {
                 "code" : "err008",
                 "message" : "댓글을 작성할 수 없습니다."
             }
             next(err);
+        } else if (exceed) {
+            res.json({
+                "result" : {
+                    "message" : "댓글은 작성하셨지만 충전량을 초과했기 때문에 적립하지는 않았습니다."
+                }
+            });
         } else {
             var results = {
                 "result" : {
@@ -529,11 +538,13 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                     "message" : "댓글이 작성되었습니다."
                 }
             }
+            bell.set(req.user.nickname, receiver, "reply", ediary_id);
+            bell.push();
             res.json(results);
         }
     })
 
-    bell.set(req.user.nickname, receiver, "reply", ediary_id);
+
 
 });
 
