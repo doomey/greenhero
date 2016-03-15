@@ -26,12 +26,12 @@ router.post('/', isLoggedIn, function(req, res, next) {
    }
    //select greensapce
    function selectGreenspace(connection, callback) {
-      var articleid = parseInt(req.body.articleid);
+      var ediaryId = parseInt(req.body.ediaryId);
 
       var select = "SELECT e.id as id, e.heart as heart, i.nickname as nickname "+
                     "FROM e_diary e join iparty i on (e.iparty_id = i.id) "+
                     "where e.id = ?";
-      connection.query(select, [articleid], function(err, results) {
+      connection.query(select, [ediaryId], function(err, results) {
          if(err) {
             connection.release();
             callback(err);
@@ -53,14 +53,22 @@ router.post('/', isLoggedIn, function(req, res, next) {
             //push
             bell.set(req.user.nickname, info.nickname, "sympathy", info.id);
             bell.push();
-            callback(null, {"message" : info.nickname+"님에게 공감하였습니다."});
+            callback(null,
+                {
+                   "result" : {
+                     "message" : info.nickname+"님에게 공감하였습니다."
+                   }
+                });
          }
       });
    }
 
    async.waterfall([getConnection, selectGreenspace, updateGreenspace], function(err, message) {
       if(err) {
-         err.message = "공감에 실패하였습니다.";
+         var err = {
+            "code" : "err010",
+            "message" : "공감에 실패하였습니다."
+         }
          next(err);
       } else {
          res.json(message);
