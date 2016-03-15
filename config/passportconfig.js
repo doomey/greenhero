@@ -67,7 +67,7 @@ module.exports = function(passport) {
              } else {
                 if(results.length === 0) {
                    var insert = "insert into iparty(nickname, google_id, google_token, google_email, totalleaf, registration_token, google_name) "+
-                                "values(?, ?, ?, ?, ?, 0, " +
+                                "values(?, ?, ?, ?, 0, ?, " +
                                 "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")) " +
                                 ")";
                    connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, req.body.registration_id, parseToken.payload.name], function(err, result) {
@@ -99,7 +99,7 @@ module.exports = function(passport) {
                       var update = "update iparty "+
                          "set google_token = ? "+
                          "where google_id = ?"
-                      connection.query(update, [req.body.id_token, parseToken.payload.email], function(err, result) {
+                      connection.query(update, [req.body.id_token, googleId], function(err, result) {
                          connection.release();
                          if(err) {
                             callback(err);
