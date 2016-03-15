@@ -40,11 +40,10 @@ module.exports = function(passport) {
         });
     });
 
-    passport.use(new GoogleTokenStrategy({
+    passport.use('google-id-token', new GoogleTokenStrategy({
         "clientID" : GoogleConfig.google.appId,
         "passReqToCallback" : true
     }, function(req, parseToken, googleId, done) {
-
        function getConnection(callback) {
           pool.getConnection(function(err, connection) {
              if(err) {
@@ -57,7 +56,7 @@ module.exports = function(passport) {
 
        function selectOrCreateUser(connection, callback) {
           var select = "select id, nickname, google_email, " +
-                       sqlAes.decrypt(google_name, true) +
+                       sqlAes.decrypt("google_name", true) +
                        "from iparty "+
                        "where google_id = ?";
           connection.query(select, [googleId], function(err, results) {
@@ -86,7 +85,7 @@ module.exports = function(passport) {
                       }
                    })
                 } else {
-                   if(req.body.registration_id === results[0].google_token) {
+                   if(req.body.registration_id === results[0].registration_token && req.body.id_token === results[0].google_token) {
                       connection.release();
                       var user = {
                          "id" : results[0].id,
@@ -97,9 +96,10 @@ module.exports = function(passport) {
                       callback(null, user);
                    } else {
                       var update = "update iparty "+
-                         "set google_token = ? "+
+                         "set registration_token = ?, "+
+                         "    google_token = ?"+
                          "where google_id = ?"
-                      connection.query(update, [req.body.id_token, googleId], function(err, result) {
+                      connection.query(update, [req.body.registration_id, req.body.id_token, googleId], function(err, result) {
                          connection.release();
                          if(err) {
                             callback(err);
