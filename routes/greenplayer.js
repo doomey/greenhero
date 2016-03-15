@@ -6,7 +6,7 @@ var async = require('async');
 var passport = require('passport');
 var logger = require('./logger');
 
-function isLoggedIn(req, res, next) {//
+function isLoggedIn(req, res, next) {
     if(!req.isAuthenticated()) {
         var err = new Error('로그인이 필요합니다...');
         err. status = 401;
@@ -27,8 +27,6 @@ function getConnection(callback){
 }
 
 router.get('/', function(req, res, next){
-    var urlObj = url.parse(req.url).query;
-    var urlQuery = queryString.parse(urlObj);
     var page = parseInt(req.query.page);
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
@@ -36,11 +34,8 @@ router.get('/', function(req, res, next){
     var offset = (page - 1) * 10;
 
     function selectArticles(connection, callback){
-        var sql = "select e.id, e.title, e.cname, " +
-            "date_format(CONVERT_TZ(e.sdate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9sdate', " +
-            "date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
-            "e.content, e.fileurl, p.photourl " +
-            "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
+        var sql = "select e.id, e.title, e.cname, p.photourl " +
+            "from epromotion e join photos p on (p.refer_type = 2 and p.refer_id = e.id) " +
             "order by e.id desc limit ? offset ?";
         connection.query(sql, [limit, offset], function(err, results){
             connection.release();
@@ -49,7 +44,7 @@ router.get('/', function(req, res, next){
             } else {
                 if(results.length){
                     var list=[];
-                    async.each(results, function(element, callback){
+                    async.eachSeries(results, function(element, callback){
                         list.push({
                             "epId" : element.id,
                             "title" : element.title,
@@ -91,25 +86,15 @@ router.get('/', function(req, res, next){
 });
 
 router.get('/:greenplayerId', function(req, res, next){
-    var greenplayerId = req.params.greenplayerId
-    var urlObj = url.parse(req.url).query;
-    var urlQuery = queryString.parse(urlObj);
-    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
-    var page = parseInt(req.query.page);
-    page = isNaN(page) ? 1 : page;
-    page = (page<1) ? 1 : page;
-    var limit = 10;
-    var offset = (page - 1) * 10;
+    var greenplayerId = req.params.greenplayerId;
 
     function selectArticles(connection, callback){
-        var sql = "select e.id, e.title, e.cname, " +
-                  "date_format(CONVERT_TZ(e.sdate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9sdate', " +
-                  "date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
-                  "e.content, e.fileurl, p.photourl " +
-                  "from epromotion e join photos p on (p.refer_type=2 and p.refer_id = e.id) " +
-                  "where e.id = ? " +
-                  "order by e.id desc limit ? offset ?";
-        connection.query(sql, [greenplayerId, limit, offset], function(err,results){
+        var sql = "select date_format(CONVERT_TZ(e.sdate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9sdate', " +
+            "       date_format(CONVERT_TZ(e.edate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9edate', " +
+            "       e.content, e.fileurl " +
+            "from epromotion e " +
+            "where e.id = ?";
+        connection.query(sql, [greenplayerId], function(err,results){
             connection.release();
             if(err){
                 callback(err);
@@ -166,7 +151,8 @@ router.post('/', isLoggedIn, function(req, res, next){
                         } else {
                             var sql = "select sum(changedamount) as tLeaf " +
                                 "from leafhistory " +
-                                "where date(applydate) = date(now()) and iparty_id = ? and leaftype = 3";
+                                "where leaftype = 3 and iparty_id = ? and to_days(date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s')) = " +
+                                "      to_days(date_format(CONVERT_TZ(now(), '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s'))";
                             connection.query(sql, [iparty_id], function (err, results) {
                                 if (err) {
                                     connection.release();
