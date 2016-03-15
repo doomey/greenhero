@@ -5,7 +5,6 @@ var bell = require('./bell');
 var logger = require('./logger');
 
 
-
 function  getConnection (callback) {
     pool.getConnection(function (err, connection) {
         if (err) {
@@ -369,7 +368,20 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
     var tLeaf = 0;
     var userLeaf = 0;
     var replyId = 0;
+    var receiver;
 
+    function selectWriter(connection, callback){
+        var sql = "select iparty_id from e_diary where id = ?";
+        connection.query(sql, [ediary_id], function(err, results){
+            if (err) {
+                connection.release();
+                callback(err);
+            } else {
+                receiver = results[0].iparty_id;
+                callback(null, connection);
+            }
+        })
+    }
 
     function insertReply(connection, callback) {
         var sql = "insert into reply (body, wdatetime, ediary_id, iparty_id) " +
@@ -503,7 +515,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
         });
     }
 
-    async.waterfall([getConnection, insertReply, insertMystory], function (err, results) {
+    async.waterfall([getConnection, selectWriter, insertReply, insertMystory], function (err, results) {
         if(err){
             var err = {
                 "code" : "err008",
@@ -521,7 +533,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
         }
     })
 
-    bell.setMessage('님이 댓글을 다셨습니다.');
+    bell.set(req.user.nickname, receiver, "reply", ediary_id);
 
 });
 
