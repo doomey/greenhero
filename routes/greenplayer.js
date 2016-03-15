@@ -136,6 +136,7 @@ router.post('/', isLoggedIn, function(req, res, next){
     var iparty_id = parseInt(req.user.id);
     var userLeaf = 0;
     var tLeaf = 0;
+    var exceed = 0;
 
     if(watch === 1){
         function leafTransaction(connection, callback) {
@@ -173,9 +174,11 @@ router.post('/', isLoggedIn, function(req, res, next){
                             callback(err);
                         } else {
                             if (tLeaf >= 20) {
-                                connection.release();
-                                var err = {"message": "오늘의 나뭇잎 충전량을 초과하였습니다."};
-                                next(err);
+                                //connection.release();
+                                //var err = {"message": "오늘의 나뭇잎 충전량을 초과하였습니다."};
+                                //next(err);
+                                exceed = 1;
+                                callback(null);
                             } else {
                                 var sql = "insert into leafhistory (applydate, leaftype, changedamount, iparty_id) " +
                                     "values (now(), 3, 10, ?)";
@@ -262,6 +265,12 @@ router.post('/', isLoggedIn, function(req, res, next){
                     "message" : "메시지는 전송받았으나 나뭇잎 적립 도중 오류가 발생했습니다."
                 }
                 next(err);
+            } else if (exceed) {
+                res.json({
+                    "result" : {
+                        "message" : "시청 완료 메시지가 정상적으로 들어왔지만 충전량을 초과했기 때문에 적립하지는 않았습니다."
+                    }
+                });
             } else {
                 res.json({
                     "result" : {
