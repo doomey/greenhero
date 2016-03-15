@@ -30,7 +30,7 @@ router.get('/', function(req, res, next){
             "WHERE board_id = ? " +
             "order by id desc " +
             "LIMIT ? OFFSET ?";
-        var faqs_num = 2;
+        var faqs_num = 3;
         connection.query(sql, [faqs_num, limit, offset], function(err,results){
             connection.release();
             if(err){
@@ -96,27 +96,27 @@ router.get('/:faqid', function(req, res, next) {
     //selectFAQ
     function selectFaq(connection, callback) {
         var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
-           "from article "+
-           "where board_id = 3 and id = ?";
+            "from article "+
+            "where board_id = 3 and id = ?";
         connection.query(select, [faqid], function(err, results) {
             connection.release();
             if(err) {
                 callback(err);
             } else {
                 if(results.length === 0) {
-                   res.json({"message" : "해당하는 FAQ가 없습니다."});
+                    res.json({"message" : "해당하는 FAQ가 없습니다."});
                 } else {
-                   var info = {
-                       "results" : {
-                           "list" : [
-                               {
-                                   "body" : results[0].body
-                               }
-                           ]
-                       }
-                   };
+                    var info = {
+                        "results" : {
+                            "list" : [
+                                {
+                                    "body" : results[0].body
+                                }
+                            ]
+                        }
+                    };
 
-                   callback(null, info);
+                    callback(null, info);
                 }
             }
         });
