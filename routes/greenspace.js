@@ -372,13 +372,17 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
     var exceed = 0;
 
     function selectWriter(connection, callback){
-        var sql = "select iparty_id from e_diary where id = ?";
+        var sql = "select i.nickname as inick " +
+                  "from e_diary e join iparty i on (i.id = e.iparty_id) " +
+                  "where e.id = ?";
         connection.query(sql, [ediary_id], function(err, results){
             if (err) {
                 connection.release();
                 callback(err);
             } else {
-                receiver = results[0].iparty_id;
+
+                receiver = results[0].inick;
+                console.log('리시버' + receiver);
                 callback(null, connection);
             }
         })
@@ -509,6 +513,8 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                     if(err) {
                         callback(err);
                     } else {
+                        bell.set(req.user.nickname, receiver, "reply", ediary_id);
+                        bell.push();
                         callback(null, result);
                     }
                 });
@@ -538,14 +544,9 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                     "message" : "댓글이 작성되었습니다."
                 }
             }
-            bell.set(req.user.nickname, receiver, "reply", ediary_id);
-            bell.push();
             res.json(results);
         }
     })
-
-
-
 });
 
 
