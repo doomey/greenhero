@@ -63,25 +63,26 @@ router.get('/me', isLoggedIn, function(req, res, next) {
 
         function selectLeaf(connection, callback) {
             var sql = "select sum(changedamount) as toleaf " +
-                      "from leafhistory " +
-                      "where iparty_id = ? and to_days(date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s')) = to_days(now())";
+                "from leafhistory " +
+                "where iparty_id = ? and to_days(date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s')) = " +
+                "                        to_days(date_format(CONVERT_TZ(now(), '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s'))";
             connection.query(sql, [req.user.id], function(err, results) {
-                 if (err) {
-                     connection.release();
-                     callback(err);
-                 } else {
-                     resentleaf = parseInt(results[0].toleaf);
-                     console.log("현재 오늘 얻은 나뭇잎 수 " + resentleaf);
-                     callback(null, connection);
-                 }
+                if (err) {
+                    connection.release();
+                    callback(err);
+                } else {
+                    resentleaf = parseInt(results[0].toleaf);
+                    console.log("현재 오늘 얻은 나뭇잎 수 " + resentleaf);
+                    callback(null, connection);
+                }
             });
         }
 
         function selectIparty(connection, callback) {
             var select = "select nickname, totalleaf, " +
-                    sqlAes.decrypt(google_name, true) +
-                  "from iparty " +
-               "where id = ?";
+                sqlAes.decrypt(google_name, true) +
+                "from iparty " +
+                "where id = ?";
             connection.query(select, [req.user.id], function(err, results) {
                 logger.log('info', "유저 검색결과 : " +  results);
                 if(err) {
@@ -128,8 +129,8 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                 leafphotoId = 1;
             }
             var sql = "select photourl " +
-                      "from photos " +
-                      "where refer_type = 5 and refer_id = ?";
+                "from photos " +
+                "where refer_type = 5 and refer_id = ?";
             connection.query(sql, [leafphotoId], function (err, results) {
                 if (err) {
                     connection.release();
@@ -143,9 +144,9 @@ router.get('/me', isLoggedIn, function(req, res, next) {
 
         function selectDaddress(message, connection, callback) {
             var select ="SELECT "+ sqlAes.decrypt("receiver") + sqlAes.decrypt("phone") + sqlAes.decrypt("add_phone") + "ad_code, " + sqlAes.decrypt("address", true) +
-                         "FROM daddress "+
-                         "where iparty_id = ? " +
-                         "order by id desc limit 1 ";
+                "FROM daddress "+
+                "where iparty_id = ? " +
+                "order by id desc limit 1 ";
             connection.query(select, [req.user.id], function(err, results) {
                 connection.release();
                 if(err) {
@@ -263,33 +264,33 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
 
         function selectLeafhistory(connection, callback) {
             var select = "select id, date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', leaftype, changedamount "+
-                          "from leafhistory "+
-                          "where iparty_id = ? limit ? offset ?";
+                "from leafhistory "+
+                "where iparty_id = ? limit ? offset ?";
             connection.query(select, [req.user.id, limit, offset], function(err, results) {
                 connection.release();
                 if(err) {
                     callback(err);
                 } else {
-                        var message = {
-                            "result": {
-                                "page": page,
-                                "listPerPage": limit,
-                                "list": []
-                            }
-                        };
-                        async.each(results, function(element, callback) {
-                            message.result.list.push({
-                                "leafType": element.leaftype,
-                                "leafApplydate": element.GMT9,
-                                "leafChangedamount": element.changedamount
-                            });
-                            callback(null);
-                        }, function(err, result) {
-                            if(err) {
-                                callback(err);
-                            }
+                    var message = {
+                        "result": {
+                            "page": page,
+                            "listPerPage": limit,
+                            "list": []
+                        }
+                    };
+                    async.each(results, function(element, callback) {
+                        message.result.list.push({
+                            "leafType": element.leaftype,
+                            "leafApplydate": element.GMT9,
+                            "leafChangedamount": element.changedamount
                         });
-                        callback(null, message);
+                        callback(null);
+                    }, function(err, result) {
+                        if(err) {
+                            callback(err);
+                        }
+                    });
+                    callback(null, message);
                 }
             });
         }
@@ -324,12 +325,12 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
 
     function selectCartAndGreenitems(connection, callback) {
         var select = "SELECT c.id as cartId, greenitems_id, p.photourl as picture, i.name as name, i.price as price, c.quantity as quantity, (c.quantity * i.price) as iprice " +
-                     "FROM cart c join greenitems i on (c.greenitems_id = i.id) " +
-                                 "join (select refer_id, photourl " +
-                                       "from photos " +
-                                       "where refer_type = 3) p " +
-                                 "on (i.id = p.refer_id) " +
-                     "where iparty_id = ?";
+            "FROM cart c join greenitems i on (c.greenitems_id = i.id) " +
+            "join (select refer_id, photourl " +
+            "from photos " +
+            "where refer_type = 3) p " +
+            "on (i.id = p.refer_id) " +
+            "where iparty_id = ?";
         connection.query(select, [req.user.id], function(err, results) {
             if(err) {
                 err.code = "err018";
@@ -375,7 +376,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
             res.json(result);
         }
     });
-    });
+});
 
 router.post('/me/baskets', isLoggedIn, function(req, res, next) {
     var itemId = req.body.itemId;

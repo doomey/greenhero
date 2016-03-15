@@ -52,11 +52,11 @@ router.get('/', isLoggedIn, function (req, res, next) {
 
     function selectMystories(connection, callback) {
         var sql = "SELECT e.id as id, e.title as title, e.wdatetime as wtime, " +
-                  "e.heart as heart, ifnull(r.rAmount,0) as rAmount " +
-                  "FROM e_diary e left join (select ediary_id, count(ediary_id) as rAmount " +
-                  "                          from reply group by ediary_id) r " +
-                  "               on (e.id = r.ediary_id) " +
-                  "WHERE e.iparty_id = ? order by id desc limit ? offset ?";
+            "e.heart as heart, ifnull(r.rAmount,0) as rAmount " +
+            "FROM e_diary e left join (select ediary_id, count(ediary_id) as rAmount " +
+            "                          from reply group by ediary_id) r " +
+            "               on (e.id = r.ediary_id) " +
+            "WHERE e.iparty_id = ? order by id desc limit ? offset ?";
         connection.query(sql, [iparty_id, limit, offset], function (err, results) {
             connection.release();
             if (err) {
@@ -103,18 +103,18 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
 
     function selectMystories(connection, callback) {
         var sql = "SELECT i.nickname as nickname, " +
-          "b.photourl as backgroundUrl, " +
-          "e.content as content, p.photourl as photoUrl " +
-          "FROM e_diary e join (select id, nickname from iparty) i " +
-          "on(e.iparty_id = i.id) " +
-          //"left join (select ediary_id, count(ediary_id) as rAmount " +
-          //           "from reply group by ediary_id) r " +
-          //"on (e.id = r.ediary_id) " +
-          "left join (select refer_id, photourl from photos where refer_type = 1) p " +
-          "on (e.id = p.refer_id) " +
-          "left join (select refer_id, photourl from photos where refer_type = 4) b " +
-          "on (e.id = b.refer_id)  " +
-          "WHERE e.iparty_id = ? and e.id = ?";
+            "b.photourl as backgroundUrl, " +
+            "e.content as content, p.photourl as photoUrl " +
+            "FROM e_diary e join (select id, nickname from iparty) i " +
+            "on(e.iparty_id = i.id) " +
+                //"left join (select ediary_id, count(ediary_id) as rAmount " +
+                //           "from reply group by ediary_id) r " +
+                //"on (e.id = r.ediary_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 1) p " +
+            "on (e.id = p.refer_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 4) b " +
+            "on (e.id = b.refer_id)  " +
+            "WHERE e.iparty_id = ? and e.id = ?";
         connection.query(sql, [iparty_id, ediary_id], function (err, results) {
             connection.release();
             if (err) {
@@ -133,21 +133,21 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
                 "message": "MYSTORY를 불러올 수 없습니다."
             }
         } else {
-                list = {
-                    "nickname": results[0].nickname,
-                    "backgroundUrl": results[0].backgroundUrl,
-                    "content": results[0].content,
-                    "photoUrl": results[0].photoUrl
-                };
-            }
-            var result = {
-                "result": {
-                    "list": [list]
-                }
+            list = {
+                "nickname": results[0].nickname,
+                "backgroundUrl": results[0].backgroundUrl,
+                "content": results[0].content,
+                "photoUrl": results[0].photoUrl
             };
-            res.json(result);
-        });
+        }
+        var result = {
+            "result": {
+                "list": [list]
+            }
+        };
+        res.json(result);
     });
+});
 
 
 
@@ -167,7 +167,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
             var bgId = req.body.bgId;
 
             var sql = "insert into e_diary (iparty_id, title, content, wdatetime, background_id) " +
-              "values (?, ?, ?, now(), ?)";
+                "values (?, ?, ?, now(), ?)";
             connection.query(sql, [iparty_id, title, content, bgId], function (err, result) {
                 if (err) {
                     connection.release();
@@ -200,47 +200,47 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                 var body = fs.createReadStream(file.path);
                 s3.upload({"Body": body}) //pipe역할
-                  .on('httpUploadProgress', function (event) {
-                      logger.log('info', event);
-                  })
-                  .send(function (err, data) {
-                      if (err) {
-                          callback(err);
-                      } else {
-                          location = data.Location;
-                          originalFilename = file.name;
-                          modifiedFilename = path.basename(file.path);
-                          photoType = file.type;
-                          fs.unlink(file.path, function () {
-                              logger.log('info', files['photo'].path + " 파일이 삭제되었습니다...");
-                          });
-                          var sql = "insert into e_diary (iparty_id, title, content, wdatetime) " +
-                            "values (?, ?, ?, now())";
-                          connection.query(sql, [iparty_id, fields['title'], fields['content']], function (err, result) {
-                              if (err) {
-                                  connection.rollback();
-                                  connection.release();
-                                  callback(err);
-                              } else {
-                                  ediary_id = result.insertId;
-                                  var sql2 = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, " +
-                                    "phototype, refer_type, refer_id) " +
-                                    "values (?, now(), ?, ?, ?, 1, ?)";
-                                  connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
-                                      if (err) {
-                                          connection.rollback();
-                                          connection.release();
-                                          callback(err);
-                                      } else {
-                                          var photoId = result.insertId;
-                                          logger.log('info', '생성된 사진 번호 : ' + photoId);
-                                          callback(null, connection);
-                                      }
-                                  });
-                              }
-                          });
-                      }
-                  });
+                    .on('httpUploadProgress', function (event) {
+                        logger.log('info', event);
+                    })
+                    .send(function (err, data) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            location = data.Location;
+                            originalFilename = file.name;
+                            modifiedFilename = path.basename(file.path);
+                            photoType = file.type;
+                            fs.unlink(file.path, function () {
+                                logger.log('info', files['photo'].path + " 파일이 삭제되었습니다...");
+                            });
+                            var sql = "insert into e_diary (iparty_id, title, content, wdatetime) " +
+                                "values (?, ?, ?, now())";
+                            connection.query(sql, [iparty_id, fields['title'], fields['content']], function (err, result) {
+                                if (err) {
+                                    connection.rollback();
+                                    connection.release();
+                                    callback(err);
+                                } else {
+                                    ediary_id = result.insertId;
+                                    var sql2 = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, " +
+                                        "phototype, refer_type, refer_id) " +
+                                        "values (?, now(), ?, ?, ?, 1, ?)";
+                                    connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
+                                        if (err) {
+                                            connection.rollback();
+                                            connection.release();
+                                            callback(err);
+                                        } else {
+                                            var photoId = result.insertId;
+                                            logger.log('info', '생성된 사진 번호 : ' + photoId);
+                                            callback(null, connection);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
             });
         }
     }
@@ -251,15 +251,17 @@ router.post('/', isLoggedIn, function(req, res, next) {
                 connection.release();
                 callback(err);
             } else {
+                var userLeaf = 0;
                 function selectTodayLeaf(callback) {
                     if (err) {
                         connection.release();
                         callback(err);
                     } else {
-                        //todo 6 : 오늘 획득한 나뭇잎을 조회한다.
                         var sql = "select sum(changedamount) as tLeaf " +
-                          "from leafhistory " +
-                          "where date(applydate) = date(now()) and iparty_id = ? and leaftype = 1";
+                            "from leafhistory " +
+                            "where leaftype = 1 and iparty_id = ? and to_days(date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s')) = " +
+                            "                                         to_days(date_format(CONVERT_TZ(now(), '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s'))";
+
                         connection.query(sql, [iparty_id], function (err, results) {
                             if (err) {
                                 connection.release();
@@ -287,7 +289,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                             //callback(null, result);
                         } else {
                             var sql = "insert into leafhistory (applydate, leaftype, changedamount, iparty_id) " +
-                              "values (now(), 1, 5, ?)";
+                                "values (now(), 1, 5, ?)";
                             connection.query(sql, [iparty_id], function (err, result) {
                                 if (err) {
                                     connection.rollback();
@@ -311,8 +313,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         callback(err);
                     } else {
                         var sql = "select sum(changedamount) as tLeaf " +
-                          "from leafhistory " +
-                          "where iparty_id = ?";
+                            "from leafhistory " +
+                            "where iparty_id = ?";
                         connection.query(sql, [iparty_id], function (err, result) {
                             if (err) {
                                 connection.release();
@@ -333,8 +335,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         callback(err);
                     } else {
                         var sql = "update iparty " +
-                          "set totalleaf = ? " +
-                          "where id = ?";
+                            "set totalleaf = ? " +
+                            "where id = ?";
                         connection.query(sql, [userLeaf, iparty_id], function (err, result) {
                             if (err) {
                                 connection.rollback();
@@ -399,8 +401,8 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
             if (fields['bgId'] === undefined) {
                 function emptyUpdate (connection, callback) {
                     var sql = "update e_diary " +
-                      "set title = ?, content = ?, wdatetime = now() " +
-                      "where iparty_id = ? and id = ?";
+                        "set title = ?, content = ?, wdatetime = now() " +
+                        "where iparty_id = ? and id = ?";
                     connection.query(sql, [fields['title'], fields['content'], iparty_id, ediary_id], function (err, result) {
                         if (err) {
                             connection.release();
@@ -426,8 +428,8 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
             } else {
                 function bgUpdate (connection, callback) {
                     var sql = "update e_diary " +
-                      "set title = ?, content = ?, wdatetime = now(), background_id = ? " +
-                      "where iparty_id = ? and id = ?";
+                        "set title = ?, content = ?, wdatetime = now(), background_id = ? " +
+                        "where iparty_id = ? and id = ?";
                     connection.query(sql, [fields['title'], fields['content'], fields['bgId'], iparty_id, ediary_id], function (err, result) {
                         if (err) {
                             connection.release();
@@ -454,8 +456,8 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
         } else {
             function deleteS3Photo(connection, callback) {
                 var sql = "select modifiedfilename " +
-                  "from photos " +
-                  "where refer_type = 1 and refer_id = ?";
+                    "from photos " +
+                    "where refer_type = 1 and refer_id = ?";
                 connection.query(sql, [ediary_id], function (err, results) {
                     if (err) {
                         connection.release();
@@ -471,8 +473,8 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
                             "region": s3Config.region
                         });
                         var params = {
-                                "Bucket": s3Config.bucket,
-                                "Key": s3Config.imageDir + "/" + results[0].modifiedfilename
+                            "Bucket": s3Config.bucket,
+                            "Key": s3Config.imageDir + "/" + results[0].modifiedfilename
                         };
                         s3.deleteObject(params, function (err, data) {
                             if (err) {
@@ -503,51 +505,51 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
 
                 var body = fs.createReadStream(file.path);
                 s3.upload({"Body": body}) //pipe역할
-                  .on('httpUploadProgress', function (event) {
-                      logger.log('info', event);
-                  })
-                  .send(function (err, data) {
-                      if (err) {
-                          logger.log('error', err);
-                          callback(err);
-                      } else {
-                          logger.log('info', "데이터의 정보 " + data);
-                          location = data.Location;
-                          originalFilename = file.name;
-                          modifiedFilename = path.basename(file.path);
-                          photoType = file.type;
-                          fs.unlink(file.path, function () {
-                              logger.log('info', files['photo'].path + " 파일이 삭제되었습니다...");
-                          });
-                          var sql = "update e_diary " +
-                            "set title = ?, content = ?, wdatetime = now() " +
-                            "where iparty_id = ? and id = ?";
-                          connection.query(sql, [fields['title'], fields['content'], iparty_id, ediary_id], function (err, result) {
-                              if (err) {
-                                  connection.rollback();
-                                  connection.release();
-                                  callback(err);
-                              } else {
-                                  var sql2 = "update photos " +
-                                    "set photourl = ?, uploaddate = now(), originalfilename = ?, modifiedfilename = ?, photoType = ? " +
-                                    "where refer_type = 1 and refer_id = ?";
-                                  connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
-                                      if (err) {
-                                          connection.rollback();
-                                          connection.release();
-                                          callback(err);
-                                      } else {
-                                          connection.commit();
-                                          connection.release();
-                                          var photoId = result.insertId;
-                                          logger.log("생성된 사진 번호 : " + photoId);
-                                          callback(null, connection);
-                                      }
-                                  });
-                              }
-                          });
-                      }
-                  });
+                    .on('httpUploadProgress', function (event) {
+                        logger.log('info', event);
+                    })
+                    .send(function (err, data) {
+                        if (err) {
+                            logger.log('error', err);
+                            callback(err);
+                        } else {
+                            logger.log('info', "데이터의 정보 " + data);
+                            location = data.Location;
+                            originalFilename = file.name;
+                            modifiedFilename = path.basename(file.path);
+                            photoType = file.type;
+                            fs.unlink(file.path, function () {
+                                logger.log('info', files['photo'].path + " 파일이 삭제되었습니다...");
+                            });
+                            var sql = "update e_diary " +
+                                "set title = ?, content = ?, wdatetime = now() " +
+                                "where iparty_id = ? and id = ?";
+                            connection.query(sql, [fields['title'], fields['content'], iparty_id, ediary_id], function (err, result) {
+                                if (err) {
+                                    connection.rollback();
+                                    connection.release();
+                                    callback(err);
+                                } else {
+                                    var sql2 = "update photos " +
+                                        "set photourl = ?, uploaddate = now(), originalfilename = ?, modifiedfilename = ?, photoType = ? " +
+                                        "where refer_type = 1 and refer_id = ?";
+                                    connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
+                                        if (err) {
+                                            connection.rollback();
+                                            connection.release();
+                                            callback(err);
+                                        } else {
+                                            connection.commit();
+                                            connection.release();
+                                            var photoId = result.insertId;
+                                            logger.log("생성된 사진 번호 : " + photoId);
+                                            callback(null, connection);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
             }
 
             async.waterfall([getConnection, deleteS3Photo, updateMystory], function (err, results) {
