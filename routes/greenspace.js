@@ -31,22 +31,22 @@ function isLoggedIn(req, res, next) {
 
 router.get('/', function(req, res, next) {
     //todo 1 : db에서 select
-   var page = parseInt(req.query.page);
-   page = (isNaN(page))? 1 : page;
-   page = (page < 1)? 1 : page;
+    var page = parseInt(req.query.page);
+    page = (isNaN(page))? 1 : page;
+    page = (page < 1)? 1 : page;
 
     var limit = 10;
     var offset = parseInt((page - 1) * 10);
 
     function selectGreenspace(connection, callback) {
         var sql = "SELECT e.id as id, e.title as title, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
-                         "e.content as content, p.photourl as photourl " +
-                  "FROM e_diary e left join (select ediary_id, count(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
-                                 "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-                                 "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
-                  "order by id desc limit ? offset ?";
+            "e.content as content, p.photourl as photourl " +
+            "FROM e_diary e left join (select ediary_id, count(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
+            "order by id desc limit ? offset ?";
         connection.query(sql, [limit, offset], function (err, results) {
-          connection.release();
+            connection.release();
             if (err) {
                 callback(err);
             } else {
@@ -92,84 +92,84 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/:ediaryId', function(req, res, next) {
-  //todo 1 : db에서 select
+    //todo 1 : db에서 select
 
-  var ediaryId = parseInt(req.params.ediaryId);
-
-
-  function selectGreenspace(connection, callback) {
-    var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, " +
-                     "date_format(CONVERT_TZ(e.wdatetime, \'+00:00\', \'+9:00\'), \'%Y-%m-%d %H:%i:%s\') as wtime," +
-                     "e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
-                     "e.content as content, p.photourl as photourl " +
-              "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
-                        "left join (select ediary_id, count(id) as rAmount " +
-                                   "from reply " +
-                                   "where ediary_id = ?) r on (e.id = r.ediary_id)" +
-                        "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-                        "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
-              "where e.id = ?";
-    connection.query(sql, [ediaryId, ediaryId], function (err, results) {
-      if (err) {
-        connection.release();
-        callback(err);
-      } else {
-        callback(null, connection, results)
-      }
-    });
-  };
+    var ediaryId = parseInt(req.params.ediaryId);
 
 
+    function selectGreenspace(connection, callback) {
+        var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, " +
+            "date_format(CONVERT_TZ(e.wdatetime, \'+00:00\', \'+9:00\'), \'%Y-%m-%d %H:%i:%s\') as wtime," +
+            "e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
+            "e.content as content, p.photourl as photourl " +
+            "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+            "left join (select ediary_id, count(id) as rAmount " +
+            "from reply " +
+            "where ediary_id = ?) r on (e.id = r.ediary_id)" +
+            "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
+            "where e.id = ?";
+        connection.query(sql, [ediaryId, ediaryId], function (err, results) {
+            if (err) {
+                connection.release();
+                callback(err);
+            } else {
+                callback(null, connection, results)
+            }
+        });
+    };
 
-  function resentGreenspace(connection, results, callback) {
-    var sql = "SELECT e.id as id, e.title as title, " +
-                     "b.photourl as backgroundUrl, " +
-                     "p.photourl as thumbnail " +
-              "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
-                        "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-                        "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
-              "order by id desc limit 6 offset 0";
-    connection.query(sql, function (err, resent) {
-      connection.release();
-      if (err) {
-        callback(err);
-      } else {
-        results.newest = resent;
-        callback(null, results);
-      }
-    });
-  }
 
-  async.waterfall([getConnection, selectGreenspace, resentGreenspace], function (err, results) {
 
-    if (err) {
-      var err ={
-        "code" : "err006",
-        "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
-      };
-      next(err);
-    } else {
-      var list = {
-          "id" : results[0].id,
-          "title": results[0].title,
-          "nickname": results[0].nickname,
-          "wtime": results[0].wtime,
-          "heart": results[0].heart,
-          "rAmount": results[0].rAmount,
-          "backgroundUrl": results[0].backgroundUrl,
-          "content": results[0].content,
-          "photoUrl": results[0].photourl
-      };
-      var result = {
-        "result": {
-          "list": [list],
-          "newest" : results.newest
-        }
-      };
-      res.json(result);
+    function resentGreenspace(connection, results, callback) {
+        var sql = "SELECT e.id as id, e.title as title, " +
+            "b.photourl as backgroundUrl, " +
+            "p.photourl as thumbnail " +
+            "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
+            "order by id desc limit 6 offset 0";
+        connection.query(sql, function (err, resent) {
+            connection.release();
+            if (err) {
+                callback(err);
+            } else {
+                results.newest = resent;
+                callback(null, results);
+            }
+        });
     }
 
-  });
+    async.waterfall([getConnection, selectGreenspace, resentGreenspace], function (err, results) {
+
+        if (err) {
+            var err ={
+                "code" : "err006",
+                "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
+            };
+            next(err);
+        } else {
+            var list = {
+                "id" : results[0].id,
+                "title": results[0].title,
+                "nickname": results[0].nickname,
+                "wtime": results[0].wtime,
+                "heart": results[0].heart,
+                "rAmount": results[0].rAmount,
+                "backgroundUrl": results[0].backgroundUrl,
+                "content": results[0].content,
+                "photoUrl": results[0].photourl
+            };
+            var result = {
+                "result": {
+                    "list": [list],
+                    "newest" : results.newest
+                }
+            };
+            res.json(result);
+        }
+
+    });
 
 });
 
@@ -182,93 +182,93 @@ router.get('/searching', function(req, res, next) {
     var limit = 10;
     var offset = parseInt((page - 1) * 10);
 
-   var search = "%"+req.query.search+"%";
-   var type = req.query.type;
+    var search = "%"+req.query.search+"%";
+    var type = req.query.type;
 
     function selectGreenspace(connection, callback) {
         if(type === "title") {
-           var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photourl "+
-                      "FROM e_diary e join (select id, nickname "+
-                      "from iparty) i "+
-                      "on(e.iparty_id = i.id) "+
-                      "left join (select ediary_id, count(ediary_id) as rAmount "+
-                      "from reply "+
-                      "group by ediary_id) r "+
-                      "on (e.id = r.ediary_id) "+
-                      "left join (select refer_id, photourl "+
-                      "from photos "+
-                      "where refer_type = 1) p "+
-                      "on (e.id = p.refer_id) "+
-                      "left join (select id, path "+
-                      "from background) b "+
-                      "on(e.background_id = b.id) "+
-                      "where e.title like ? "+
-                      "order by id desc limit ? offset ?";
-           connection.query(sql, [search, limit, offset], function (err, space) {
-              if (err) {
-                 connection.release();
-                 callback(err);
-              } else {
-                 callback(null, space)
-              }
-           });
+            var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photourl "+
+                "FROM e_diary e join (select id, nickname "+
+                "from iparty) i "+
+                "on(e.iparty_id = i.id) "+
+                "left join (select ediary_id, count(ediary_id) as rAmount "+
+                "from reply "+
+                "group by ediary_id) r "+
+                "on (e.id = r.ediary_id) "+
+                "left join (select refer_id, photourl "+
+                "from photos "+
+                "where refer_type = 1) p "+
+                "on (e.id = p.refer_id) "+
+                "left join (select id, path "+
+                "from background) b "+
+                "on(e.background_id = b.id) "+
+                "where e.title like ? "+
+                "order by id desc limit ? offset ?";
+            connection.query(sql, [search, limit, offset], function (err, space) {
+                if (err) {
+                    connection.release();
+                    callback(err);
+                } else {
+                    callback(null, space)
+                }
+            });
         }
 
-       if(type === "body") {
-          var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photourl "+
-             "FROM e_diary e join (select id, nickname "+
-             "from iparty) i "+
-             "on(e.iparty_id = i.id) "+
-             "left join (select ediary_id, count(ediary_id) as rAmount "+
-             "from reply "+
-             "group by ediary_id) r "+
-             "on (e.id = r.ediary_id) "+
-             "left join (select refer_id, photourl "+
-             "from photos "+
-             "where refer_type = 1) p "+
-             "on (e.id = p.refer_id) "+
-             "left join (select id, path "+
-             "from background) b "+
-             "on(e.background_id = b.id) "+
-             "where e.content like ? "+
-             "order by id desc limit ? offset ?";
-          connection.query(sql, [search, limit, offset], function (err, space) {
-             if (err) {
-                connection.release();
-                callback(err);
-             } else {
-                callback(null, space)
-             }
-          });
-       }
+        if(type === "body") {
+            var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photourl "+
+                "FROM e_diary e join (select id, nickname "+
+                "from iparty) i "+
+                "on(e.iparty_id = i.id) "+
+                "left join (select ediary_id, count(ediary_id) as rAmount "+
+                "from reply "+
+                "group by ediary_id) r "+
+                "on (e.id = r.ediary_id) "+
+                "left join (select refer_id, photourl "+
+                "from photos "+
+                "where refer_type = 1) p "+
+                "on (e.id = p.refer_id) "+
+                "left join (select id, path "+
+                "from background) b "+
+                "on(e.background_id = b.id) "+
+                "where e.content like ? "+
+                "order by id desc limit ? offset ?";
+            connection.query(sql, [search, limit, offset], function (err, space) {
+                if (err) {
+                    connection.release();
+                    callback(err);
+                } else {
+                    callback(null, space)
+                }
+            });
+        }
 
-       if(type === "nickname") {
-          var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photourl "+
-             "FROM e_diary e join (select id, nickname "+
-             "from iparty) i "+
-             "on(e.iparty_id = i.id) "+
-             "left join (select ediary_id, count(ediary_id) as rAmount "+
-             "from reply "+
-             "group by ediary_id) r "+
-             "on (e.id = r.ediary_id) "+
-             "left join (select refer_id, photourl "+
-             "from photos "+
-             "where refer_type = 1) p "+
-             "on (e.id = p.refer_id) "+
-             "left join (select id, path "+
-             "from background) b "+
-             "on(e.background_id = b.id) "+
-             "where i.nickname like ? "+
-             "order by id desc limit ? offset ?";
-          connection.query(sql, [search, limit, offset], function (err, space) {
-             connection.release();
-             if (err) {
-                callback(err);
-             } else {
-                callback(null, space)
-             }
-          });
-       }
+        if(type === "nickname") {
+            var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, date_format(CONVERT_TZ(e.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as wtime, e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.path as backgroundUrl, e.content as content, p.photourl as photourl "+
+                "FROM e_diary e join (select id, nickname "+
+                "from iparty) i "+
+                "on(e.iparty_id = i.id) "+
+                "left join (select ediary_id, count(ediary_id) as rAmount "+
+                "from reply "+
+                "group by ediary_id) r "+
+                "on (e.id = r.ediary_id) "+
+                "left join (select refer_id, photourl "+
+                "from photos "+
+                "where refer_type = 1) p "+
+                "on (e.id = p.refer_id) "+
+                "left join (select id, path "+
+                "from background) b "+
+                "on(e.background_id = b.id) "+
+                "where i.nickname like ? "+
+                "order by id desc limit ? offset ?";
+            connection.query(sql, [search, limit, offset], function (err, space) {
+                connection.release();
+                if (err) {
+                    callback(err);
+                } else {
+                    callback(null, space)
+                }
+            });
+        }
     }
 
     async.waterfall([getConnection, selectGreenspace], function (err, results) {
@@ -323,42 +323,42 @@ router.get('/:ediaryId/replies', function(req, res, next) {
 
 
 
-  function selectReview(connection, callback) {
-    var sql = "SELECT r.id, r.body, date_format(CONVERT_TZ(r.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'wtime', i.nickname " +
-              "from reply r join (select id, nickname " +
-                                 "from iparty) i " +
-                           "on(r.iparty_id = i.id) " +
-              "where ediary_id = ? " +
-              "limit ? offset ?";
-    connection.query(sql, [e_id, limit, offset], function (err, results) {
-        connection.release();
-      if (err) {
-          callback(err);
-      } else {
-          callback(null, results);
-      }
-    });
-  }
+    function selectReview(connection, callback) {
+        var sql = "SELECT r.id, r.body, date_format(CONVERT_TZ(r.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'wtime', i.nickname " +
+            "from reply r join (select id, nickname " +
+            "from iparty) i " +
+            "on(r.iparty_id = i.id) " +
+            "where ediary_id = ? " +
+            "limit ? offset ?";
+        connection.query(sql, [e_id, limit, offset], function (err, results) {
+            connection.release();
+            if (err) {
+                callback(err);
+            } else {
+                callback(null, results);
+            }
+        });
+    }
 
-  async.waterfall([getConnection, selectReview], function (err, results){
-      if(err) {
-          var err = {
-                  "code" : "err007",
-                  "message" : "댓글을 불러올 수 없습니다."
-          }
-          next(err);
-      } else {
-          res.json(
-              { "result" : {
-                  "ediaryId" : e_id,
-                  "page" : page,
-                  "listPerPage" : limit,
-                  "list" : results
-              }
+    async.waterfall([getConnection, selectReview], function (err, results){
+        if(err) {
+            var err = {
+                "code" : "err007",
+                "message" : "댓글을 불러올 수 없습니다."
+            }
+            next(err);
+        } else {
+            res.json(
+                { "result" : {
+                    "ediaryId" : e_id,
+                    "page" : page,
+                    "listPerPage" : limit,
+                    "list" : results
+                }
 
-              });
-      }
-  })
+                });
+        }
+    })
 });
 
 
@@ -397,10 +397,10 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                         connection.release();
                         callback(err);
                     } else {
-                                //todo 6 : 오늘 획득한 나뭇잎을 조회한다.
                         var sql = "select sum(changedamount) as tLeaf " +
-                                    "from leafhistory " +
-                                    "where date(applydate) = date(now()) and iparty_id = ? and leaftype = 2";
+                            "from leafhistory " +
+                            "where leaftype = 2 and iparty_id = ? and to_days(date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s')) = " +
+                            "                                         to_days(date_format(CONVERT_TZ(now(), '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s'))";
                         connection.query(sql, [iparty_id], function (err, results) {
                             if (err) {
                                 connection.release();
@@ -451,8 +451,8 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                         callback(err);
                     } else {
                         var sql = "select sum(changedamount) as tLeaf " +
-                                  "from leafhistory " +
-                                  "where iparty_id = ?";
+                            "from leafhistory " +
+                            "where iparty_id = ?";
                         connection.query(sql, [iparty_id], function (err, result) {
                             if (err) {
                                 connection.release();
@@ -473,8 +473,8 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                         callback(err);
                     } else {
                         var sql = "update iparty " +
-                                  "set totalleaf = ? " +
-                                  "where id = ?";
+                            "set totalleaf = ? " +
+                            "where id = ?";
                         connection.query(sql, [userLeaf, iparty_id], function (err, result) {
                             if (err) {
                                 connection.rollback();
@@ -521,7 +521,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
         }
     })
 
-    bell.setMessage('님이 댓들을 다셨습니다.');
+    bell.setMessage('님이 댓글을 다셨습니다.');
 
 });
 
@@ -534,7 +534,7 @@ router.put('/:ediaryId/replies/:replyId', isLoggedIn, function(req, res, next) {
 
     function compareUser(connection, callback) {
         var sql = "SELECT * FROM reply " +
-                  "where iparty_id = ? and ediary_id = ? and id = ?";
+            "where iparty_id = ? and ediary_id = ? and id = ?";
         connection.query(sql, [req.user.id, ediary_id, reply_id], function (err, results) {
             if(err) {
                 callback(err);
@@ -552,8 +552,8 @@ router.put('/:ediaryId/replies/:replyId', isLoggedIn, function(req, res, next) {
 
     function updateReply(connection, callback) {
         var sql = "update reply " +
-                  "set body = ?, wdatetime = now() " +
-                  "where iparty_id = ? and ediary_id = ? and id = ?";
+            "set body = ?, wdatetime = now() " +
+            "where iparty_id = ? and ediary_id = ? and id = ?";
         connection.query(sql, [body, req.user.id, ediary_id, reply_id], function (err, result) {
             connection.release();
             if (err) {
@@ -569,8 +569,8 @@ router.put('/:ediaryId/replies/:replyId', isLoggedIn, function(req, res, next) {
     async.waterfall([getConnection, compareUser, updateReply], function (err, result) {
         if (err) {
             var err = {
-                    "code" : "err009",
-                    "message" : "댓글을 수정할 수 없습니다."
+                "code" : "err009",
+                "message" : "댓글을 수정할 수 없습니다."
             }
             next(err);
         } else {
