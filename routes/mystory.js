@@ -158,7 +158,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
     var originalFilename = "";
     var modifiedFilename = "";
     var photoType = "";
-
+    var exceed = 0;
 
     function writeMystory(connection, callback) {
         if(req.headers['content-type'] === 'application/x-www-form-urlencoded') {
@@ -283,10 +283,12 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         callback(err);
                     } else {
                         if (tLeaf >= 15) {
-                            connection.release();
-                            var err = {"message": "오늘의 나뭇잎 충전량을 초과하였습니다."};
-                            next(err);
+                            //connection.release();
+                            //var err = {"message": "오늘의 나뭇잎 충전량을 초과하였습니다."};
+                            //next(err);
                             //callback(null, result);
+                            exceed = 1;
+                            callback(null);
                         } else {
                             var sql = "insert into leafhistory (applydate, leaftype, changedamount, iparty_id) " +
                                 "values (now(), 1, 5, ?)";
@@ -372,6 +374,12 @@ router.post('/', isLoggedIn, function(req, res, next) {
                 "message": "MYSTORY를 작성할 수 없습니다."
             }
             next(err);
+        } else if (exceed) {
+            res.json({
+                "result" : {
+                    "message" : "글은 쓰셨지만 충전량을 초과했기 때문에 적립하지는 않았습니다."
+                }
+            });
         } else {
             var results = {
                 "result": {
