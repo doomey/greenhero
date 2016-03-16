@@ -35,6 +35,7 @@ router.post('/login', function(req, res, next) {
                         logger.log('error', err);
                         next(err);
                     } else {
+                        logger.log('info', req.user.nickname+'님 로그인');
                         res.json({"message" : user.nickname+"님 환영합니다!"});
                     }
                 });
@@ -187,6 +188,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                 logger.log('error', err);
                 next(err);
             } else {
+                logger.log('info', req.user.nickname+'님 배송지 변경');
                 res.json(message);
             }
         });
@@ -236,6 +238,7 @@ router.put('/me', isLoggedIn, function(req, res, next) {
                 logger.log('error', err);
                 next(err);
             } else {
+                logger.log('info', req.user.nickname+'님 정보를 변경하였습니다.');
                 res.json(message);
             }
         });
@@ -444,6 +447,7 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
             logger.log('error', err);
             next(err);
         } else {
+            logger.log('info', req.user.nickname+'님 장바구니에 물품 추가.');
             res.json({
                 "result" : {
                     "message" : "장바구니에 물품을 추가하였습니다."
@@ -531,6 +535,7 @@ router.put('/me/baskets', function(req, res, next) {
             logger.log('error', err);
             next(err);
         } else {
+            logger.log('info', req.user.nickname+'님 장바구니 물품 수정.');
             res.json({
                 "result": {
                     "message": "장바구니에 물품을 수정하였습니다."

@@ -425,7 +425,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                                 callback(err);
                             } else {
                                 tLeaf = results[0].tLeaf;
-                                logger.log('info', "오늘 획득 한 총 나뭇잎 개수 : " + tLeaf);
+                                logger.log('info', req.user.nickname+"님 오늘 획득 한 총 나뭇잎 개수 : " + tLeaf);
                                 callback(null, tLeaf);
                             }
                         });

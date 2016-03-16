@@ -84,10 +84,10 @@ exports.push = function() {
 
       sender.send(message, registrationIds, 4, function(err, result) {
          if(err) {
-            logger.log('error', err);
+            logger.log('error', 'bell send 에러 : ' + err);
             callback(err);
          } else {
-            logger.log('info', result);
+            logger.log('info', 'bell send 정보 : ' + result);
          }
       });
 

@@ -272,6 +272,7 @@ router.post('/', isLoggedIn, function(req, res, next){
                     }
                 });
             } else {
+                logger.log('info', req.user.nickname+'님 동영상 시청으로 나뭇잎 획득');
                 res.json({
                     "result" : {
                         "message" : "시청 완료 메시지가 정상적으로 들어와서 나뭇잎을 적립했습니다."

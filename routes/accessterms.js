@@ -62,7 +62,7 @@ router.get('/', function(req, res, next){
                 "code" : "err028",
                 "message" : "이용약관 목록 불러오기를 실패하였습니다."
             }
-            logger.log('error', err);
+            logger.log('error', 'accessterm 보기 에러 : ' + err);
             next(err);
         } else {
             res.json({
@@ -123,7 +123,7 @@ router.get('/:accesstermId', function(req, res, next) {
         if(err) {
             err.message = "이용약관 상세 불러오기를 실패하였습니다.";
             err.code = "err029";
-            logger.log('error', err);
+            logger.log('error', 'accessterm 상세보기 에러 : ' + err);
             next(err);
         } else {
             res.json(result);

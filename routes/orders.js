@@ -173,7 +173,6 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                 if(totalleaf < TP) {
                                     connection.rollback();
                                     connection.release();
-                                    console.log('토탈리프 ', totalleaf, ', TP ', TP);
                                     var err = new Error('보유한 나뭇잎이 주문한 물건의 금액보다 작습니다.');
                                     err.code = "err027";
                                     next(err);
@@ -254,6 +253,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     logger.log('error', err);
                     next(err);
                 } else {
+                    logger.log('info', req.user.nickname+'님 주문으로 나뭇잎 '+message.result.totalPrice+' 사용');
                     res.json(message);
                 }
             });
@@ -314,6 +314,7 @@ router.post('/setaddress', function(req, res, next) {
                 logger.log('error', err);
                 next(err);
             } else {
+                logger.log('info', req.user.nickname+'님 주소 등록');
                 res.json(message);
             }
         });

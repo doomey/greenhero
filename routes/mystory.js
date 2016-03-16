@@ -386,6 +386,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                 }
             });
         } else {
+            logger.log('info', req.user.nickname+'님 글작성 후 나뭇잎 획득');
             var results = {
                 "result": {
                     "ediaryId": results.insertId,

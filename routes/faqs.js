@@ -67,7 +67,7 @@ router.get('/', function(req, res, next){
                 "code" : "err030",
                 "message" : "FAQ 목록 불러오기를 실패하였습니다."
             }
-            logger.log('error', err);
+            logger.log('error', 'FAQ 보기 에러 : ' + err);
             next(err);
         } else {
             res.json({
@@ -127,7 +127,7 @@ router.get('/:faqid', function(req, res, next) {
         if(err) {
             err.message = "FAQ 상세 불러오기를 실패하였습니다...";
             err.code = "err030";
-            logger.log('error', err);
+            logger.log('error', 'FAQ 상세보기 에러 : ' + err);
             next(err);
         } else {
             res.json(result);
