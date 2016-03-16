@@ -99,7 +99,7 @@ router.get('/:accesstermId', function(req, res, next) {
                 callback(err);
             } else {
                 if(results.length === 0) {
-                    res.json({"message" : "해당하는 이용약관이 없습니다."});
+                    callback(null, {"message" : "해당하는 이용약관이 없습니다."});
                 } else {
                     var info = {
                         "results" : {

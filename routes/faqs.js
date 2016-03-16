@@ -43,7 +43,7 @@ router.get('/', function(req, res, next){
                             "id" : element.id,
                             "type" : element.board_id,
                             "title" : element.title,
-                            "date" : element.GMT9,
+                            "date" : element.GMT9
                             //"body" : element.body
                         });
                         callback(null);
@@ -54,8 +54,8 @@ router.get('/', function(req, res, next){
                             callback(null, list);
                         }
                     });
-                } else {
-                    callback(err);
+                } else { //셀렉트는 정상적으로 처리되었지만 결과가 없는 경우
+                    callback(null, [{"message" : "결과가 없습니다."}]);
                 }
             }
         });
@@ -104,7 +104,7 @@ router.get('/:faqid', function(req, res, next) {
                 callback(err);
             } else {
                 if(results.length === 0) {
-                    res.json({"message" : "해당하는 FAQ가 없습니다."});
+                    callback(null, {"message" : "해당하는 FAQ가 없습니다."});
                 } else {
                     var info = {
                         "results" : {
@@ -125,7 +125,7 @@ router.get('/:faqid', function(req, res, next) {
     async.waterfall([getConnection, selectFaq], function(err, result) {
         if(err) {
             err.message = "FAQ 상세 불러오기를 실패하였습니다...";
-            err.code = "err031";
+            err.code = "err030";
             next(err);
         } else {
             res.json(result);

@@ -55,7 +55,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else {
-                    callback(err);
+                    callback(null, [{"message" : "결과가 없습니다."}]);
                 }
             }
         });
@@ -104,7 +104,7 @@ router.get('/:policyid', function(req, res, next) {
                 callback(err);
             } else {
                 if(results.length === 0) {
-                    res.json({"message" : "해당하는 운영정책이 없습니다."});
+                    callback(null, {"message" : "해당하는 운영정책이 없습니다."});
                 } else {
                     var info = {
                         "results" : {

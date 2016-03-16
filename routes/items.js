@@ -53,7 +53,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else {
-                    callback(err);
+                    callback(null, [{"message" : "결과가 없습니다."}]);
                 }
             }
         });
@@ -116,7 +116,7 @@ router.get('/:itemsId', function(req, res, next){
                         "itemDescription": results[0].description
                     });
                 } else {
-                    callback(err);
+                    callback(null, {"message" : "결과가 없습니다."});
                 }
             }
         });

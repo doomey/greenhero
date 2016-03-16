@@ -25,6 +25,7 @@ router.post('/login', function(req, res, next) {
                 next(err);
             } else if(!user){
                 var err = new Error('유효한 토큰이 아닙니다...');
+                err.code = "err001";
                 err.status = 401;
                 next(err);
             } else {
@@ -72,7 +73,6 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                     callback(err);
                 } else {
                     resentleaf = parseInt(results[0].toleaf);
-                    console.log("현재 오늘 얻은 나뭇잎 수 " + resentleaf);
                     callback(null, connection);
                 }
             });
@@ -84,7 +84,6 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                 "from iparty " +
                 "where id = ?";
             connection.query(select, [req.user.id], function(err, results) {
-                logger.log('info', "유저 검색결과 : " +  results);
                 if(err) {
                     connection.release();
                     callback(err);
@@ -332,9 +331,8 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
             "on (i.id = p.refer_id) " +
             "where iparty_id = ?";
         connection.query(select, [req.user.id], function(err, results) {
+           connection.release();
             if(err) {
-                err.code = "err018";
-                err.message = "장바구니를 사용할 수 없습니다...";
                 callback(err);
             } else {
 
@@ -356,7 +354,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
                         "quantity": element.quantity,
                         "iPrice": element.iprice
                     });
-                    totalprice += element.iprice
+                    totalprice += element.iprice;
                     callback(null);
                 }, function(err, result) {
                     if(err) {
@@ -371,6 +369,8 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
     }
     async.waterfall([getConnection, selectCartAndGreenitems], function(err, result) {
         if(err) {
+            err.code = "err023";
+            err.message = "장바구니를 사용할 수 없습니다...";
             next(err);
         } else {
             res.json(result);
@@ -433,7 +433,7 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
 
     async.waterfall([getConnection, insertCart], function(err, result) {
         if(err) {
-            err.code = "err019";
+            err.code = "err024";
             err.message = "장바구니에 물건 추가를 실패하였습니다...";
             next(err);
         } else {
@@ -455,7 +455,7 @@ router.put('/me/baskets', function(req, res, next) {
 
     if((typeof cartId)=== 'string') {
         cid.push(parseInt(cartId));
-        quantity.push(parseInt(quantity));
+        qt.push(parseInt(quantity));
     } else {
         cartId.forEach(function(item) {
             cid.push(parseInt(item));
@@ -519,7 +519,7 @@ router.put('/me/baskets', function(req, res, next) {
 
     async.waterfall([getConnection, updateOrDeleteCart], function (err, result) {
         if (err) {
-            err.code = "err020";
+            err.code = "err025";
             err.message = "장바구니에 있는 물품 수정에 실패하였습니다...";
             next(err);
         } else {

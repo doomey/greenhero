@@ -55,8 +55,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
             function selectIparty(connection, callback) {
                 var select = "select google_id as gid, " +
-                             sqlAes.decrypt(google_name, true) +
-                             " as gname, google_email, " +
+                             sqlAes.decrypt("google_name") +
+                             "google_email, " +
                              //"convert(aes_decrypt(phone, unhex(" + connection.escape(serverKey) + ")) using utf8), " +
                              sqlAes.decrypt("phone") +
                              "totalleaf "+
@@ -104,7 +104,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                     //1. greenitems테이블에서 물품id별로 select
                     function selectGreenitems(callback) {
-                        var select = "select id, name, picture, price "+
+                        var select = "select id, name, price "+
                                      "from greenitems "+
                                      "where id in (?)";
                         connection.query(select, [iid], function(err, results) {
@@ -114,15 +114,25 @@ router.post('/', isLoggedIn, function(req, res, next) {
                             } else {
                                 var index = 0;
                                 var TP = 0;
-                                async.each(results, function(element, callback) {
-                                    message.result.items.push({
-                                        "id" : element.id,
-                                        "name" : element.name,
-                                        "picture" : element.picture,
-                                        "price" : element.price,
-                                        "quantity" : qt[index]
+                                async.each(results, function(result, callback) {
+                                    var select = "select photourl "+
+                                                  "from photos "+
+                                                  "where refer_type = 3 and refer_id = ?";
+                                    connection.query(select, [result.id], function(err, results) {
+                                        if(err) {
+                                            callback(err);
+                                        } else {
+                                            message.result.items.push({
+                                                "id" : result.id,
+                                                "name" : result.name,
+                                                "picture" : results[0].photourl,
+                                                "price" : result.price,
+                                                "quantity" : qt[index]
+                                            });
+                                        }
                                     });
-                                    TP += element.price * qt[index];
+
+                                    TP += result.price * qt[index];
                                     index++;
                                     callback(null);
                                 }, function(err, result) {
@@ -162,6 +172,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                 if(totalleaf < TP) {
                                     connection.rollback();
                                     connection.release();
+                                    console.log('토탈리프 ', totalleaf, ', TP ', TP);
                                     var err = new Error('보유한 나뭇잎이 주문한 물건의 금액보다 작습니다.');
                                     err.code = "err027";
                                     next(err);

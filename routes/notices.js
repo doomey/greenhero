@@ -8,7 +8,7 @@ router.get('/', function(req, res, next){
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
     var limit = 10;
-    var offset = (page - 1) * 10;
+    var offset = (page - 1) * limit;
 
     function getConnection(callback){
         pool.getConnection(function(err, connection){
@@ -39,8 +39,7 @@ router.get('/', function(req, res, next){
                             "id" : element.id,
                             "type" : element.board_id,
                             "title" : element.title,
-                            "date" : element.GMT9,
-                            //"body" : element.body
+                            "date" : element.GMT9
                         });
                         callback(null);
                     }, function(err, result){
@@ -51,7 +50,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else {
-                    callback(err);
+                   callback(null, [{"message" : "결과가 없습니다."}]);
                 }
             }
         });
@@ -101,7 +100,7 @@ router.get('/:noticeid', function(req, res, next) {
             callback(err);
          } else {
             if(results.length === 0) {
-               res.json({"message" : "해당 공지사항이 없습니다."});
+               callback(null, {"message" : "해당 공지사항이 없습니다."});
             } else {
                var info = {
                   "results" : {

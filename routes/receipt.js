@@ -18,7 +18,7 @@ router.get('/', isLoggedIn, function(req, res, next) {
         page = isNaN(page)? 1 : page;
         page = (page<1)? 1 : page;
 
-        var limit = 4;
+        var limit = 10;
         var offset = limit*(page-1);
         //1. connection
         //orders, orderdetails join
@@ -34,9 +34,10 @@ router.get('/', isLoggedIn, function(req, res, next) {
         }
 
         function getTotal(connection, callback) {
-            var select = "select count(*) as cnt "+
-                          "from orders";
-            connection.query(select, [], function(err, results) {
+            var select = "SELECT count(id) as cnt "+
+                         "FROM orders o join orderdetails od on(o.id = od.order_id) "+
+                         "where iparty_id = ?";
+            connection.query(select, [req.user.id], function(err, results) {
                 if(err) {
                     connection.release();
                     callback(err);
@@ -65,17 +66,22 @@ router.get('/', isLoggedIn, function(req, res, next) {
                             "items" : []
                         }
                     };
-                    results.forEach(function(item) {
+                    async.each(results, function(result, cb) {
                         message.result.items.push({
-                            "id" : item.gid,
-                            "orderId" : item.id,
-                            "date" : item.date,
-                            "name" : item.name,
-                            "picture" : item.picture,
-                            "price" : item.price,
-                            "quantity" : item.quantity,
-                            "iPrice" : item.iprice
-                        });
+                                    "id" : result.gid,
+                                    "orderId" : result.id,
+                                    "date" : result.date,
+                                    "name" : result.name,
+                                    "picture" : result.picture,
+                                    "price" : result.price,
+                                    "quantity" : result.quantity,
+                                    "iPrice" : result.iprice
+                                });
+                        cb(null);
+                    }, function(err) {
+                        if(err) {
+                            callback(err);
+                        }
                     });
                     callback(null, message);
                 }
