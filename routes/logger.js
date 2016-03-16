@@ -1,7 +1,6 @@
 var winston = require('winston');
 var DailyRotateFile = require('winston-daily-rotate-file');
-
-var logger = new winston.Logger(config);
+var path = require('path');
 
 var config = {
   transports: [
@@ -12,18 +11,22 @@ var config = {
     new DailyRotateFile({
       name: 'warnLogger',
       level: 'warn',
-      filename: 'warn-',
+      filename: path.join(__dirname, '../logging/warn-'),
       datePattern: 'yyyy-MM-dd_HH.log',
-      json: false
+      json: false,
+      maxsize: 1024*1024
     }),
     new DailyRotateFile({
-      name: 'debugLooger',
+      name: 'debugLogger',
       level: 'debug',
-      filename: 'debug-',
+      filename: path.join(__dirname, '../logging/debug-'),
       datePattern: 'yyyy-MM-dd_HH.log',
-      json: false
+      json: false,
+      maxsize: 1024*1024
     })
   ]
 };
+
+var logger = new winston.Logger(config);
 
 module.exports = logger;
