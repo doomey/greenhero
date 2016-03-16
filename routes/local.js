@@ -9,14 +9,17 @@ router.post('/login', function(req, res, next) {
    if(req.secure) {
       passport.authenticate('local-login', function(err, user, info) {
          if(err) {
+            logger.log('error', err);
             next(err);
          } else if(!user){
             var err = new Error('암호를 확인하시기 바랍니다...');
             err.status = 401;
+            logger.log('error', err);
             next(err);
          } else {
             req.logIn(user, function(err) {
                if(err) {
+                  logger.log('error', err);
                   next(err);
                } else {
                   res.json(user);
@@ -33,7 +36,7 @@ router.post('/login', function(req, res, next) {
 
 router.post('/logout', function(req, res, next) {
 
-   logger.log('info', '유저아이디', req.session.userId);
+   logger.log('info', '유저아이디 : ', req.session.userId);
    req.logOut();
 
    res.json({
@@ -72,6 +75,7 @@ router.post('/signup', function(req, res, next) {
                } else {
                   var err = new Error("이미 존재하는 사용자입니다...");
                   err.status = 409;
+                  logger.log('error', err);
                   callback(err);
                }
             }
@@ -116,6 +120,7 @@ router.post('/signup', function(req, res, next) {
 
       async.waterfall([getConnection, selectIparty, generateSalt, genHashPassword, insertIparty], function(err, result) {
          if(err) {
+            logger.log('error', err);
             next(err);
          } else {
             result.message = "정상적으로 사용자가 저장되었습니다...";

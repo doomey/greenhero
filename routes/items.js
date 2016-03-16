@@ -3,6 +3,7 @@ var router = express.Router();
 var url = require('url');
 var queryString = require('querystring');
 var async = require('async');
+var logger = require('./logger');
 
 router.get('/', function(req, res, next){
     var urlObj = url.parse(req.url).query;
@@ -64,7 +65,8 @@ router.get('/', function(req, res, next){
             var err = {
                 "code" : "err018",
                 "message" : "GREEN SHOP의 물건 목록들을 불러올 수 없습니다."
-            }
+            };
+            logger.log('error', err);
             next(err);
         } else {
             res.json({
@@ -127,7 +129,8 @@ router.get('/:itemsId', function(req, res, next){
             var err = {
                 "code" : "err019",
                 "message" : "GREEN SHOP의 물건 상세들을 불러올 수 없습니다."
-            }
+            };
+            logger.log('error', err);
             next(err);
         } else {
             res.json({

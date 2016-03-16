@@ -2,6 +2,7 @@ var express = require('express');
 var async = require('async');
 var router = express.Router();
 var url = require('url');
+var logger = require('./logger');
 
 router.get('/', function(req, res, next){
     var page = parseInt(req.query.page);
@@ -50,7 +51,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else {
-                   callback(null, [{"message" : "결과가 없습니다."}]);
+                   callback(null, [{"message" : "공지사항이 없습니다."}]);
                 }
             }
         });
@@ -62,7 +63,8 @@ router.get('/', function(req, res, next){
             var err = {
                 "code" : "err026",
                 "message" : "공지사항 목록 불러오기를 실패하였습니다."
-            }
+            };
+           logger.log('error', err);
             next(err);
         } else {
             res.json({
@@ -123,6 +125,7 @@ router.get('/:noticeid', function(req, res, next) {
       if(err) {
          err.message = "공지사항 상세 불러오기를 실패하였습니다...";
          err.code = "err027";
+         logger.log('error', err);
          next(err);
       } else {
          res.json(result);

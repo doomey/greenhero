@@ -56,12 +56,12 @@ router.get('/', function(req, res, next) {
 
 
     async.waterfall([getConnection, selectGreenspace], function (err, results) {
-
         if (err) {
             var err ={
                 "code" : "err006",
                 "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
             };
+            logger.log('error', err);
             next(err);
         } else {
             var list = [];
@@ -140,12 +140,12 @@ router.get('/:ediaryId', function(req, res, next) {
     }
 
     async.waterfall([getConnection, selectGreenspace, resentGreenspace], function (err, results) {
-
         if (err) {
             var err ={
                 "code" : "err006",
                 "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
             };
+            logger.log('error', err);
             next(err);
         } else {
             var list = {
@@ -271,12 +271,12 @@ router.get('/searching', function(req, res, next) {
     }
 
     async.waterfall([getConnection, selectGreenspace], function (err, results) {
-
         if (err) {
             var err ={
                 "code" : "err006",
                 "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
             };
+            logger.log('error', err);
             next(err);
         } else {
             var list = [];
@@ -345,6 +345,7 @@ router.get('/:ediaryId/replies', function(req, res, next) {
                 "code" : "err007",
                 "message" : "댓글을 불러올 수 없습니다."
             }
+            logger.log('error', err);
             next(err);
         } else {
             res.json(
@@ -511,6 +512,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
 
                 async.series([selectTodayLeaf, insertLeaf, selectUserLeaf, updateUserLeaf], function(err, result) {
                     if(err) {
+                        logger.log('error', err);
                         callback(err);
                     } else {
                         bell.set(req.user.nickname, receiver, "reply", ediary_id);
@@ -530,6 +532,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                 "code" : "err008",
                 "message" : "댓글을 작성할 수 없습니다."
             }
+            logger.log('error', err);
             next(err);
         } else if (exceed) {
             res.json({
@@ -595,7 +598,8 @@ router.put('/:ediaryId/replies/:replyId', isLoggedIn, function(req, res, next) {
             var err = {
                 "code" : "err009",
                 "message" : "댓글을 수정할 수 없습니다."
-            }
+            };
+            logger.log('error', err);
             next(err);
         } else {
             res.json(result);

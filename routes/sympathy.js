@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var bell = require('./bell');
+var logger = require('./logger');
 
 function isLoggedIn(req, res, next) {//
    if(!req.isAuthenticated()) {
@@ -69,6 +70,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
             "code" : "err010",
             "message" : "공감에 실패하였습니다."
          }
+         logger.log('error', err);
          next(err);
       } else {
          res.json(message);

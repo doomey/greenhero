@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var sqlAes = require('./sqlAES.js');
+var logger = require('./logger');
 
 sqlAes.setServerKey(serverKey);
 
@@ -236,6 +237,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     async.waterfall([selectGreenitems, insertOrders, insertOrderdetails, insertLeafhistory], function(err, message) {
                         if(err) {
                             connection.rollback();
+                            logger.log('error', err);
                             callback(err);
                         } else {
                             connection.commit();
@@ -249,6 +251,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                 if(err) {
                     err.code = "err015";
                     err.message = "주문실패. 목록을 불러올 수 없습니다.";
+                    logger.log('error', err);
                     next(err);
                 } else {
                     res.json(message);
@@ -308,6 +311,7 @@ router.post('/setaddress', function(req, res, next) {
             if(err) {
                 err.code = "err016";
                 err.message = "주소 등록에 실패하였습니다...";
+                logger.log('error', err);
                 next(err);
             } else {
                 res.json(message);

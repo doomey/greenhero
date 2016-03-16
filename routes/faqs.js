@@ -55,7 +55,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else { //셀렉트는 정상적으로 처리되었지만 결과가 없는 경우
-                    callback(null, [{"message" : "결과가 없습니다."}]);
+                    callback(null, [{"message" : "FAQ가 없습니다."}]);
                 }
             }
         });
@@ -67,6 +67,7 @@ router.get('/', function(req, res, next){
                 "code" : "err030",
                 "message" : "FAQ 목록 불러오기를 실패하였습니다."
             }
+            logger.log('error', err);
             next(err);
         } else {
             res.json({
@@ -126,6 +127,7 @@ router.get('/:faqid', function(req, res, next) {
         if(err) {
             err.message = "FAQ 상세 불러오기를 실패하였습니다...";
             err.code = "err030";
+            logger.log('error', err);
             next(err);
         } else {
             res.json(result);

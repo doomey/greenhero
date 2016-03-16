@@ -53,6 +53,7 @@ exports.push = function() {
       connection.query(select, [receivers], function(err, results) {
          connection.release();
          if(err) {
+            logger.log('error', err);
             callback(err);
          } else {
             callback(null, results);
@@ -83,6 +84,7 @@ exports.push = function() {
 
       sender.send(message, registrationIds, 4, function(err, result) {
          if(err) {
+            logger.log('error', err);
             callback(err);
          } else {
             logger.log('info', result);

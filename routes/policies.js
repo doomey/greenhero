@@ -3,6 +3,7 @@ var async = require('async');
 var router = express.Router();
 var url = require('url');
 var queryString = require('querystring');
+var logger = require('./logger');
 
 router.get('/', function(req, res, next){
     var urlObj = url.parse(req.url).query;
@@ -55,7 +56,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else {
-                    callback(null, [{"message" : "결과가 없습니다."}]);
+                    callback(null, [{"message" : "운영정책이 없습니다."}]);
                 }
             }
         });
@@ -66,7 +67,8 @@ router.get('/', function(req, res, next){
             var err = {
                 "code" : "err032",
                 "message" : "운영정책 불러오기를 실패하였습니다."
-            }
+            };
+            logger.log('error', err);
             next(err);
         } else {
             res.json({
@@ -126,6 +128,7 @@ router.get('/:policyid', function(req, res, next) {
         if(err) {
             err.message = "운영정책 상세 불러오기를 실패하였습니다.";
             err.code = "err033";
+            logger.log('error', err);
             next(err);
         } else {
             res.json(result);

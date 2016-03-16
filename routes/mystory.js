@@ -72,7 +72,8 @@ router.get('/', isLoggedIn, function (req, res, next) {
             var err = {
                 "code": "err011",
                 "message": "MYSTORY를 불러올 수 없습니다."
-            }
+            };
+            logger.log('error', err);
         } else {
             var list = [];
             for(var i = 0; i< results.length; i++){
@@ -131,7 +132,9 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
             var err = {
                 "code": "err011",
                 "message": "MYSTORY를 불러올 수 없습니다."
-            }
+            };
+            logger.log('error', err);
+            next(err);
         } else {
             list = {
                 "nickname": results[0].nickname,
@@ -356,6 +359,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                 async.series([selectTodayLeaf, insertLeaf, selectUserLeaf, updateUserLeaf], function (err, result) {
                     if (err) {
+                        logger.log('error', err);
                         callback(err);
                     } else {
                         callback(null, result);
@@ -372,7 +376,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
             var err = {
                 "code": "err011",
                 "message": "MYSTORY를 작성할 수 없습니다."
-            }
+            };
+            logger.log('error', err);
             next(err);
         } else if (exceed) {
             res.json({
@@ -565,7 +570,8 @@ router.put('/:ediaryId', isLoggedIn, function(req, res, next) {
                     var err = {
                         "code" : "err012",
                         "message" : "Mystory를 수정할 수 없습니다."
-                    }
+                    };
+                    logger.log('error', err);
                     next(err);
                 } else {
                     res.json("수정이 완료되었습니다.(updateMystory)");

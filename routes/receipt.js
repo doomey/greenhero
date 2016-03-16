@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
+var logger = require('./logger');
 
 function isLoggedIn(req, res, next) {
     if(!req.isAuthenticated()) {
@@ -89,6 +90,9 @@ router.get('/', isLoggedIn, function(req, res, next) {
         }
         async.waterfall([getConnection, getTotal, selectOrders], function(err, message) {
             if(err) {
+                err.code = "err022";
+                err.message = "구매내역을 불러올 수 없습니다.";
+                logger.log('error', err);
                 next(err);
             } else {
                 res.json(message);

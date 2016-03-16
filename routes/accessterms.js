@@ -2,6 +2,7 @@ var express = require('express');
 var async = require('async');
 var router = express.Router();
 var url = require('url');
+var logger = require('./logger');
 
 router.get('/', function(req, res, next){
     var page = parseInt(req.query.page);
@@ -49,7 +50,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else {
-                    callback(err);
+                    callback(null, {"message" : "이용약관이 없습니다."});
                 }
             }
         });
@@ -61,6 +62,7 @@ router.get('/', function(req, res, next){
                 "code" : "err028",
                 "message" : "이용약관 목록 불러오기를 실패하였습니다."
             }
+            logger.log('error', err);
             next(err);
         } else {
             res.json({
@@ -121,6 +123,7 @@ router.get('/:accesstermId', function(req, res, next) {
         if(err) {
             err.message = "이용약관 상세 불러오기를 실패하였습니다.";
             err.code = "err029";
+            logger.log('error', err);
             next(err);
         } else {
             res.json(result);

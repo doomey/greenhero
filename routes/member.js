@@ -27,10 +27,12 @@ router.post('/login', function(req, res, next) {
                 var err = new Error('유효한 토큰이 아닙니다...');
                 err.code = "err001";
                 err.status = 401;
+                logger.log('error', err);
                 next(err);
             } else {
                 req.logIn(user, function(err) {
                     if(err) {
+                        logger.log('error', err);
                         next(err);
                     } else {
                         res.json({"message" : user.nickname+"님 환영합니다!"});
@@ -182,6 +184,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
             if(err) {
                 err.code = "err002";
                 err.message = "내 정보를 불러올 수 없습니다...";
+                logger.log('error', err);
                 next(err);
             } else {
                 res.json(message);
@@ -230,6 +233,7 @@ router.put('/me', isLoggedIn, function(req, res, next) {
             if(err) {
                 err.code = "err003";
                 err.message = "내 정보를 수정하는데 실패하였습니다...";
+                logger.log('error', err);
                 next(err);
             } else {
                 res.json(message);
@@ -298,6 +302,7 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
             if(err) {
                 err.code = "err004";
                 err.message = "나뭇잎 사용내역을 조회할 수 없습니다...";
+                logger.log('error', err);
                 next(err);
             } else {
                 res.json(message);
@@ -371,6 +376,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
         if(err) {
             err.code = "err023";
             err.message = "장바구니를 사용할 수 없습니다...";
+            logger.log('error', err);
             next(err);
         } else {
             res.json(result);
@@ -435,6 +441,7 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
         if(err) {
             err.code = "err024";
             err.message = "장바구니에 물건 추가를 실패하였습니다...";
+            logger.log('error', err);
             next(err);
         } else {
             res.json({
@@ -521,6 +528,7 @@ router.put('/me/baskets', function(req, res, next) {
         if (err) {
             err.code = "err025";
             err.message = "장바구니에 있는 물품 수정에 실패하였습니다...";
+            logger.log('error', err);
             next(err);
         } else {
             res.json({
