@@ -23,6 +23,8 @@ router.post('/login', function(req, res, next) {
         console.log(req.body);
         logger.log('debug', req.body);
         passport.authenticate('google-id-token', function(err, user, info) {
+            console.log(user);
+            logger.log('debug', user);
             if(err) {
                 next(err);
             } else if(!user){
