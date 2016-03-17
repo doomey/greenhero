@@ -42,7 +42,7 @@ router.get('/', function(req, res, next) {
             "e.content as content, p.photourl as photourl " +
             "FROM e_diary e left join (select ediary_id, count(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
             "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.background_id = b.refer_id) " +
             "order by id desc limit ? offset ?";
         connection.query(sql, [limit, offset], function (err, results) {
             connection.release();
@@ -106,7 +106,7 @@ router.get('/:ediaryId', function(req, res, next) {
             "from reply " +
             "where ediary_id = ?) r on (e.id = r.ediary_id)" +
             "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.background_id = b.refer_id) " +
             "where e.id = ?";
         connection.query(sql, [ediaryId, ediaryId], function (err, results) {
             if (err) {
@@ -126,7 +126,7 @@ router.get('/:ediaryId', function(req, res, next) {
             "p.photourl as thumbnail " +
             "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
             "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
-            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.id = b.refer_id) " +
+            "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.background_id = b.refer_id) " +
             "order by id desc limit 6 offset 0";
         connection.query(sql, function (err, resent) {
             connection.release();
