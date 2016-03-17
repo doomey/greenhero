@@ -289,19 +289,20 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
                             "list": []
                         }
                     };
-                    async.each(results, function(element, callback) {
+                    async.eachSeries(results, function(element, callback) {
                         message.result.list.push({
                             "leafType": element.leaftype,
                             "leafApplydate": element.GMT9,
                             "leafChangedamount": element.changedamount
                         });
                         callback(null);
-                    }, function(err, result) {
+                    }, function(err) {
                         if(err) {
                             callback(err);
+                        } else {
+                            callback(null, message);
                         }
                     });
-                    callback(null, message);
                 }
             });
         }
@@ -357,7 +358,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
                 };
 
                 var totalprice = 0;
-                async.each(results, function(element, callback) {
+                async.eachSeries(results, function(element, callback) {
                     message.result.items.push({
                         "cartId" : element.cartId,
                         "itemId": element.greenitems_id,
@@ -369,7 +370,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
                     });
                     totalprice += element.iprice;
                     callback(null);
-                }, function(err, result) {
+                }, function(err) {
                     if(err) {
                         callback(err);
                     } else {
@@ -422,7 +423,7 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
 
     function insertCart(connection, callback) {
         var index = 0;
-        async.each(iid, function(element, callback) {
+        async.eachSeries(iid, function(element, callback) {
             var insert = "insert into cart(greenitems_id, iparty_id, quantity) "+
                 "values(?, ?, ?)";
             connection.query(insert, [element, req.user.id, qt[index]], function(err, result) {
@@ -434,13 +435,13 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
                 }
             });
             index++;
-        }, function(err, result) {
+        }, function(err) {
             if(err) {
                 callback(err);
             } else {
                 connection.release();
                 index = 0;
-                callback(null, result);
+                callback(null);
             }
         });
     }
@@ -495,7 +496,7 @@ router.put('/me/baskets', function(req, res, next) {
     function updateOrDeleteCart(connection, callback) {
         var index = 0;
         if (qt[index] !== 0) {
-            async.each(cid, function(element, callback) {
+            async.eachSeries(cid, function(element, callback) {
                 //update
                 var update = "update cart " +
                     "set quantity = ? " +
@@ -509,12 +510,12 @@ router.put('/me/baskets', function(req, res, next) {
                     }
                 });
                 index++;
-            }, function(err, result) {
+            }, function(err) {
                 if(err) {
                     callback(err);
                 } else {
                     connection.release();
-                    callback(null, result);
+                    callback(null);
                 }
             });
             index = 0;

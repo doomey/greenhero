@@ -6,9 +6,6 @@ var async = require('async');
 var logger = require('./logger');
 
 router.get('/', function(req, res, next){
-    var urlObj = url.parse(req.url).query;
-    var urlQuery = queryString.parse(urlObj);
-    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
     var page = parseInt(req.query.page);
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
@@ -37,7 +34,7 @@ router.get('/', function(req, res, next){
             } else {
                 if(results.length){
                     var list = [];
-                    async.each(results, function(element, callback) {
+                    async.eachSeries(results, function(element, callback) {
                         list.push({
                             "id" : element.id,
                             "name": element.name,
@@ -82,9 +79,6 @@ router.get('/', function(req, res, next){
 
 router.get('/:itemsId', function(req, res, next){
     var itemsId = req.params.itemsId;
-    var urlObj = url.parse(req.url).query;
-    var urlQuery = queryString.parse(urlObj);
-    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
     var page = parseInt(req.query.page);
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
@@ -102,7 +96,7 @@ router.get('/:itemsId', function(req, res, next){
     }
 
     function selectItems(connection, callback){
-        var sql = "SELECT i.id, i.name, p.photourl, i.star, i.price, i.tquantity, i.description " +
+        var sql = "SELECT i.tquantity, i.description " +
                   "FROM greenitems i " +
                   "JOIN photos p ON (p.refer_type=3 AND p.refer_id = i.id) " +
                   "WHERE i.id = ? " +
