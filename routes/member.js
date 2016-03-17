@@ -20,12 +20,13 @@ function isLoggedIn(req, res, next) {
 
 router.post('/login', function(req, res, next) {
     if(req.secure) {
-        console.log(req.body);
         logger.log('debug', req.body);
+        logger.log('info', req.body);
         passport.authenticate('google-id-token', function(err, user, info) {
-            console.log(user);
             logger.log('debug', user);
+            logger.log('info', user);
             if(err) {
+                logger.log('error', user);
                 next(err);
             } else if(!user){
                 var err = new Error('유효한 토큰이 아닙니다...');
