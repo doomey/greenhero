@@ -136,19 +136,30 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
             logger.log('error', err);
             next(err);
         } else {
-            list = {
-                "nickname": results[0].nickname,
-                "backgroundUrl": results[0].backgroundUrl,
-                "content": results[0].content,
-                "photoUrl": results[0].photoUrl
-            };
-        }
-        var result = {
-            "result": {
-                "list": [list]
+            if(results.length === 0){
+                var err = {
+                    "code": "err011",
+                    "message": "MYSTORY를 불러올 수 없습니다."
+                };
+                logger.log('error', err);
+                next(err);
+            } else {
+                list = {
+                    "nickname": results[0].nickname,
+                    "backgroundUrl": results[0].backgroundUrl,
+                    "content": results[0].content,
+                    "photoUrl": results[0].photoUrl
+                };
+                var result = {
+                    "result": {
+                        "list": [list]
+                    }
+                };
+                res.json(result);
             }
-        };
-        res.json(result);
+
+        }
+
     });
 });
 

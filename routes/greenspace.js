@@ -148,24 +148,34 @@ router.get('/:ediaryId', function(req, res, next) {
             logger.log('error', err);
             next(err);
         } else {
-            var list = {
-                "id" : results[0].id,
-                "title": results[0].title,
-                "nickname": results[0].nickname,
-                "wtime": results[0].wtime,
-                "heart": results[0].heart,
-                "rAmount": results[0].rAmount,
-                "backgroundUrl": results[0].backgroundUrl,
-                "content": results[0].content,
-                "photoUrl": results[0].photourl
-            };
-            var result = {
-                "result": {
-                    "list": [list],
-                    "newest" : results.newest
-                }
-            };
-            res.json(result);
+            if(results.length===0){
+                var err ={
+                    "code" : "err006",
+                    "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
+                };
+                logger.log('error', err);
+                next(err);
+            } else {
+                var list = {
+                    "id" : results[0].id,
+                    "title": results[0].title,
+                    "nickname": results[0].nickname,
+                    "wtime": results[0].wtime,
+                    "heart": results[0].heart,
+                    "rAmount": results[0].rAmount,
+                    "backgroundUrl": results[0].backgroundUrl,
+                    "content": results[0].content,
+                    "photoUrl": results[0].photourl
+                };
+                var result = {
+                    "result": {
+                        "list": [list],
+                        "newest" : results.newest
+                    }
+                };
+                res.json(result);
+            }
+
         }
 
     });
