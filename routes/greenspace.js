@@ -310,8 +310,6 @@ router.get('/searching', function(req, res, next) {
 
 /* GET home page. */
 router.get('/:ediaryId/replies', function(req, res, next) {
-    //var urlObj = url.parse(req.url).query;
-    //var urlquery = queryString.parse(urlObj);
     var e_id = parseInt(req.params.ediaryId);
     var page = parseInt(req.query.page);
     page = (isNaN(page))? 1 : page;

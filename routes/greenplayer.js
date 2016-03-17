@@ -1,7 +1,6 @@
 var express = require('express');
 var url = require('url');
 var router = express.Router();
-var queryString = require('querystring');
 var async = require('async');
 var passport = require('passport');
 var logger = require('./logger');
@@ -31,7 +30,7 @@ router.get('/', function(req, res, next){
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
     var limit = 10;
-    var offset = (page - 1) * 10;
+    var offset = (page - 1) * limit;
 
     function selectArticles(connection, callback){
         var sql = "select e.id, e.title, e.cname, p.photourl " +
