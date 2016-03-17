@@ -22,20 +22,19 @@ router.get('/', function(req, res, next){
     }
 
     function selectArticles(connection, callback){
-        var sql = "SELECT id, title, body, date_format(CONVERT_TZ(wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', board_id " +
+        var sql = "SELECT id, title, date_format(CONVERT_TZ(wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', board_id " +
             "FROM article " +
-            "WHERE board_id = ? " +
+            "WHERE board_id = 1 " +//공지사항 : 1
             "order by id desc " +
             "LIMIT ? OFFSET ?";
-        var notices_num = 1;
-        connection.query(sql, [notices_num, limit, offset], function(err,results){
+        connection.query(sql, [limit, offset], function(err, results){
             connection.release();
             if(err){
                 callback(err);
             } else {
                 if(results.length){
                     var list = [];
-                    async.each(results, function(element, callback){
+                    async.eachSeries(results, function(element, callback){
                         list.push({
                             "id" : element.id,
                             "type" : element.board_id,
@@ -43,7 +42,7 @@ router.get('/', function(req, res, next){
                             "date" : element.GMT9
                         });
                         callback(null);
-                    }, function(err, result){
+                    }, function(err){
                         if(err) {
                             callback(err);
                         } else {
@@ -58,13 +57,12 @@ router.get('/', function(req, res, next){
     }
 
     async.waterfall([getConnection, selectArticles], function(err, result){
-        //err = new Error();
         if(err){
             var err = {
                 "code" : "err026",
                 "message" : "공지사항 목록 불러오기를 실패하였습니다."
             };
-           logger.log('error', err);
+            logger.log('error', 'notices 목록보기 에러 : ' + err);
             next(err);
         } else {
             res.json({
@@ -78,59 +76,55 @@ router.get('/', function(req, res, next){
     });
 });
 
-router.get('/:noticeid', function(req, res, next) {
-   var noticeid = parseInt(req.params.noticeid);
+router.get('/:noticeId', function(req, res, next) {
+    var noticeId = parseInt(req.params.noticeId);
 
-   //getConnection
-   function getConnection(callback){
-      pool.getConnection(function(err, connection){
-         if(err){
-            callback(err);
-         } else {
-            callback(null, connection);
-         }
-      });
-   }
-   //selectNotice
-   function selectNotice(connection, callback) {
-      var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
-                    "from article "+
-                    "where board_id = 1 and id = ?";
-      connection.query(select, [noticeid], function(err, results) {
-         connection.release();
-         if(err) {
-            callback(err);
-         } else {
-            if(results.length === 0) {
-               callback(null, {"message" : "해당 공지사항이 없습니다."});
+    //getConnection
+    function getConnection(callback){
+        pool.getConnection(function(err, connection){
+            if(err){
+                callback(err);
             } else {
-               var info = {
-                  "results" : {
-                      "list" : [
-                          {
-                              "body" : results[0].body
-                          }
-                      ]
-                  }
-               };
-
-               callback(null, info);
+                callback(null, connection);
             }
+        });
+    }
 
-         }
-      });
-   }
+    //selectNotice
+    function selectNotice(connection, callback) {
+        var select = "select body "+
+                     "from article "+
+                     "where board_id = 1 and id = ?";
+        connection.query(select, [noticeId], function(err, results) {
+            connection.release();
+            if(err) {
+                callback(err);
+            } else {
+                if(results.length){
+                    callback(null, [{"body" : results[0].body}])
+                } else {
+                    callback(null, [{"message" : "공지사항이 없습니다."}]);
+                }
+            }
+        });
+    }
 
-   async.waterfall([getConnection, selectNotice], function(err, result) {
-      if(err) {
-         err.message = "공지사항 상세 불러오기를 실패하였습니다...";
-         err.code = "err027";
-         logger.log('error', err);
-         next(err);
-      } else {
-         res.json(result);
-      }
-   });
+    async.waterfall([getConnection, selectNotice], function(err, result) {
+        if(err){
+            var err = {
+                "code" : "err027",
+                "message" : "공지사항 상세 불러오기를 실패하였습니다."
+            };
+            logger.log('error', 'notices 상세보기 에러 : ' + err);
+            next(err);
+        } else {
+            res.json({
+                "result" : {
+                    "list" : result
+                }
+            });
+        }
+    });
 });
 
 module.exports = router;

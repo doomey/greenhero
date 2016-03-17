@@ -9,7 +9,7 @@ router.get('/', function(req, res, next){
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
     var limit = 10;
-    var offset = (page - 1) * 10;
+    var offset = (page - 1) * limit;
 
     function getConnection(callback){
         pool.getConnection(function(err, connection){
@@ -50,7 +50,7 @@ router.get('/', function(req, res, next){
                         }
                     });
                 } else {
-                    callback(null, {"message" : "이용약관이 없습니다."});
+                    callback(null, [{"message" : "이용약관이 없습니다."}]);
                 }
             }
         });
@@ -62,7 +62,7 @@ router.get('/', function(req, res, next){
                 "code" : "err028",
                 "message" : "이용약관 목록 불러오기를 실패하였습니다."
             }
-            logger.log('error', 'accessterm 보기 에러 : ' + err);
+            logger.log('error', 'accessterms 목록보기 에러 : ' + err);
             next(err);
         } else {
             res.json({
@@ -100,33 +100,29 @@ router.get('/:accesstermId', function(req, res, next) {
             if(err) {
                 callback(err);
             } else {
-                if(results.length === 0) {
-                    callback(null, {"message" : "해당하는 이용약관이 없습니다."});
+                if(results.length){
+                    callback(null, [{"body" : results[0].body}])
                 } else {
-                    var info = {
-                        "results" : {
-                            "list" : [
-                                {
-                                    "body" : results[0].body
-                                }
-                            ]
-                        }
-                    };
-
-                    callback(null, info);
+                    callback(null, [{"message" : "이용약관이 없습니다."}]);
                 }
             }
         });
     }
 
     async.waterfall([getConnection, selectAccessterm], function(err, result) {
-        if(err) {
-            err.message = "이용약관 상세 불러오기를 실패하였습니다.";
-            err.code = "err029";
-            logger.log('error', 'accessterm 상세보기 에러 : ' + err);
+        if(err){
+            var err = {
+                "code" : "err029",
+                "message" : "이용약관 상세 불러오기를 실패하였습니다."
+            };
+            logger.log('error', 'notices 상세보기 에러 : ' + err);
             next(err);
         } else {
-            res.json(result);
+            res.json({
+                "result" : {
+                    "list" : result
+                }
+            });
         }
     });
 });

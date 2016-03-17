@@ -2,17 +2,14 @@ var express = require('express');
 var async = require('async');
 var router = express.Router();
 var url = require('url');
-var queryString = require('querystring');
+var logger = require('./logger');
 
 router.get('/', function(req, res, next){
-    var urlObj = url.parse(req.url).query;
-    var urlQuery = queryString.parse(urlObj);
-    //var page = isNaN(urlQuery.page) || (urlQuery.page < 1) ? 1 : urlQuery.page;
     var page = parseInt(req.query.page);
     page = isNaN(page) ? 1 : page;
     page = (page<1) ? 1 : page;
     var limit = 10;
-    var offset = (page - 1) * 10;
+    var offset = (page - 1) * limit;
 
     function getConnection(callback){
         pool.getConnection(function(err, connection){
@@ -25,29 +22,27 @@ router.get('/', function(req, res, next){
     }
 
     function selectArticles(connection, callback){
-        var sql = "SELECT id, title, body, date_format(CONVERT_TZ(wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', board_id " +
+        var sql = "SELECT id, title, date_format(CONVERT_TZ(wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', board_id " +
             "FROM article " +
-            "WHERE board_id = ? " +
+            "WHERE board_id = 3 " +//faq : 3
             "order by id desc " +
             "LIMIT ? OFFSET ?";
-        var faqs_num = 3;
-        connection.query(sql, [faqs_num, limit, offset], function(err,results){
+        connection.query(sql, [limit, offset], function(err, results){
             connection.release();
             if(err){
                 callback(err);
             } else {
                 if(results.length){
                     var list = [];
-                    async.each(results, function(element, callback){
+                    async.eachSeries(results, function(element, callback){
                         list.push({
                             "id" : element.id,
                             "type" : element.board_id,
                             "title" : element.title,
                             "date" : element.GMT9
-                            //"body" : element.body
                         });
                         callback(null);
-                    }, function(err, result){
+                    }, function(err){
                         if(err) {
                             callback(err);
                         } else {
@@ -67,7 +62,7 @@ router.get('/', function(req, res, next){
                 "code" : "err030",
                 "message" : "FAQ 목록 불러오기를 실패하였습니다."
             }
-            logger.log('error', 'FAQ 보기 에러 : ' + err);
+            logger.log('error', 'FAQ 목록보기 에러 : ' + err);
             next(err);
         } else {
             res.json({
@@ -81,8 +76,8 @@ router.get('/', function(req, res, next){
     });
 });
 
-router.get('/:faqid', function(req, res, next) {
-    var faqid = parseInt(req.params.faqid);
+router.get('/:faqId', function(req, res, next) {
+    var faqId = parseInt(req.params.faqId);
 
     //getConnection
     function getConnection(callback){
@@ -94,43 +89,40 @@ router.get('/:faqid', function(req, res, next) {
             }
         });
     }
+
     //selectFAQ
     function selectFaq(connection, callback) {
-        var select = "select id, title, body, date_format(CONVERT_TZ(wdatetime,'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as wdatetime "+
+        var select = "select body "+
             "from article "+
             "where board_id = 3 and id = ?";
-        connection.query(select, [faqid], function(err, results) {
+        connection.query(select, [faqId], function(err, results) {
             connection.release();
             if(err) {
                 callback(err);
             } else {
-                if(results.length === 0) {
-                    callback(null, {"message" : "해당하는 FAQ가 없습니다."});
+                if(results.length){
+                    callback(null, [{"body" : results[0].body}])
                 } else {
-                    var info = {
-                        "results" : {
-                            "list" : [
-                                {
-                                    "body" : results[0].body
-                                }
-                            ]
-                        }
-                    };
-
-                    callback(null, info);
+                    callback(null, [{"message" : "FAQ가 없습니다."}]);
                 }
             }
         });
     }
 
     async.waterfall([getConnection, selectFaq], function(err, result) {
-        if(err) {
-            err.message = "FAQ 상세 불러오기를 실패하였습니다...";
-            err.code = "err030";
-            logger.log('error', 'FAQ 상세보기 에러 : ' + err);
+        if(err){
+            var err = {
+                "code" : "err031",
+                "message" : "FAQ 상세 불러오기를 실패하였습니다."
+            };
+            logger.log('error', 'faqs 상세보기 에러 : ' + err);
             next(err);
         } else {
-            res.json(result);
+            res.json({
+                "result" : {
+                    "list" : result
+                }
+            });
         }
     });
 });
