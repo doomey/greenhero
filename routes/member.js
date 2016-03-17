@@ -20,6 +20,8 @@ function isLoggedIn(req, res, next) {
 
 router.post('/login', function(req, res, next) {
     if(req.secure) {
+        console.log(req.body);
+        logger.log('debug', req.body);
         passport.authenticate('google-id-token', function(err, user, info) {
             if(err) {
                 next(err);
