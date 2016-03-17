@@ -18,8 +18,8 @@ module.exports = function(passport) {
                 done(err);
             } else {
                 var sql = "select " +
-                          "id, username, nickname, " +
-                          sqlAes.decrypt("name", true) +
+                          "id, username, nickname, google_name " +
+                          //sqlAes.decrypt("name", true) +
                           "from iparty " +
                           "where id = ?";
                 connection.query(sql, [id], function(err, results) {
@@ -29,8 +29,7 @@ module.exports = function(passport) {
                     } else {
                         var user = {
                             "id" : results[0].id,
-                            "username" : results[0].username,
-                            "name" : results[0].name,
+                            "name" : results[0].google_name,
                             "nickname" : results[0].nickname
                         };
                         done(null, user);
@@ -64,12 +63,13 @@ module.exports = function(passport) {
                 connection.release();
                 callback(err);
              } else {
+                console.log('페이로드', parseToken.payload);
                 if(results.length === 0) {
                    var insert = "insert into iparty(nickname, google_id, google_token, google_email, totalleaf, registration_token, google_name) "+
                                 "values(?, ?, ?, ?, 0, ?, " +
                                 "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")) " +
                                 ")";
-                   connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, req.body.registration_id, parseToken.payload.name], function(err, result) {
+                   connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, 0, req.body.registration_id, parseToken.payload.name], function(err, result) {
                       connection.release();
                       if(err) {
                          callback(err);
@@ -89,8 +89,8 @@ module.exports = function(passport) {
                       connection.release();
                       var user = {
                          "id" : results[0].id,
-                         "email" : results[0].nickname,
-                         "name" : results[0].nickname,
+                         "email" : results[0].google_email,
+                         "name" : results[0].google_name,
                          "nickname" : results[0].nickname
                       };
                       callback(null, user);
