@@ -68,7 +68,7 @@ module.exports = function(passport) {
                                 "values(?, ?, ?, ?, 0, ?, 1, " +
                                 "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")) " +
                                 ")";
-                   connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, 0, req.body.registration_id, parseToken.payload.name], function(err, result) {
+                   connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, req.body.registration_id, parseToken.payload.name], function(err, result) {
                       connection.release();
                       if(err) {
                          callback(err);
