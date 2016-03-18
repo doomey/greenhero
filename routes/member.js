@@ -40,8 +40,13 @@ router.post('/login', function(req, res, next) {
                         logger.log('error', err);
                         next(err);
                     } else {
-                        logger.log('info', req.user.nickname+'님 로그인');
-                        res.json({"message" : user.nickname+"님 환영합니다!"});
+                        if(req.user.nickname !== undefined) {
+                            logger.log('info', req.user.nickname + '님 로그인');
+                            res.json({"message" : user.nickname + "님 환영합니다!"});
+                        } else {
+                            logger.log('info', 'ID '+ req.user.id +'님 구글로그인 연동');
+                            res.json({"message" : "구글 연동되었습니다. 환영합니다!"});
+                        }
                     }
                 });
             }
@@ -88,7 +93,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
 
         function selectIparty(connection, callback) {
             var select = "select nickname, totalleaf, " +
-                sqlAes.decrypt(google_name, true) +
+                sqlAes.decrypt("google_name", true) +
                 "from iparty " +
                 "where id = ?";
             connection.query(select, [req.user.id], function(err, results) {
@@ -159,14 +164,20 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                 if(err) {
                     callback(err);
                 } else {
-                    message.result.address = {
-                        "gName" : results[0].receiver,
-                        "dPhone1" : results[0].phone,
-                        "dPhone2" : results[0].add_phone,
-                        "dAdcode" : results[0].ad_code,
-                        "dAddress" : results[0].address
-                    };
-                    callback(null, message);
+                    if(results.length) {
+                        message.result.address = {
+                            "gName" : results[0].receiver,
+                            "dPhone1" : results[0].phone,
+                            "dPhone2" : results[0].add_phone,
+                            "dAdcode" : results[0].ad_code,
+                            "dAddress" : results[0].address
+                        };
+                        callback(null, message);
+                    } else {
+                        message.result.address = "배송정보가 아직 입력되지 않았습니다.";
+                        callback(null, message);
+                    }
+
                 }
             });
         }
@@ -282,27 +293,34 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
                 if(err) {
                     callback(err);
                 } else {
-                    var message = {
-                        "result": {
-                            "page": page,
-                            "listPerPage": limit,
-                            "list": []
-                        }
-                    };
-                    async.eachSeries(results, function(element, callback) {
-                        message.result.list.push({
-                            "leafType": element.leaftype,
-                            "leafApplydate": element.GMT9,
-                            "leafChangedamount": element.changedamount
+                    if(results.length) {
+                        var message = {
+                            "result": {
+                                "page": page,
+                                "listPerPage": limit,
+                                "list": []
+                            }
+                        };
+                        async.eachSeries(results, function(element, callback) {
+                            message.result.list.push({
+                                "leafType": element.leaftype,
+                                "leafApplydate": element.GMT9,
+                                "leafChangedamount": element.changedamount
+                            });
+                            callback(null);
+                        }, function(err) {
+                            if(err) {
+                                callback(err);
+                            } else {
+                                callback(null, message);
+                            }
                         });
-                        callback(null);
-                    }, function(err) {
-                        if(err) {
-                            callback(err);
-                        } else {
-                            callback(null, message);
-                        }
-                    });
+                    } else {
+                        var message = {
+                            "result": "나뭇잎 적립 내역이 없습니다."
+                        };
+                        callback(null, message);
+                    }
                 }
             });
         }
