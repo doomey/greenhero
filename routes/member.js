@@ -174,7 +174,9 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                         };
                         callback(null, message);
                     } else {
-                        message.result.address = "배송정보가 아직 입력되지 않았습니다.";
+                        message.result.address = {
+                            "message" : "배송정보가 아직 입력되지 않았습니다."
+                        };
                         callback(null, message);
                     }
 
