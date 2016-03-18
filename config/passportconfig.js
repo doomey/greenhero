@@ -18,8 +18,8 @@ module.exports = function(passport) {
                 done(err);
             } else {
                 var sql = "select " +
-                          "id, username, nickname, google_name " +
-                          //sqlAes.decrypt("name", true) +
+                          "id, nickname, " +
+                          sqlAes.decrypt("google_name", true) +
                           "from iparty " +
                           "where id = ?";
                 connection.query(sql, [id], function(err, results) {
