@@ -329,9 +329,8 @@ router.get('/:ediaryId/replies', function(req, res, next) {
 
 
 
-
     function selectReview(connection, callback) {
-        var sql = "SELECT r.id, r.body, date_format(CONVERT_TZ(r.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'wtime', i.nickname " +
+        var sql = "SELECT r.id, r.body, r.iparty_id, date_format(CONVERT_TZ(r.wdatetime, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'wtime', i.nickname " +
             "from reply r join (select id, nickname " +
             "from iparty) i " +
             "on(r.iparty_id = i.id) " +
@@ -356,15 +355,45 @@ router.get('/:ediaryId/replies', function(req, res, next) {
             logger.log('error', err);
             next(err);
         } else {
-            res.json(
-                { "result" : {
+            var list = [];
+            for(var i = 0; i< results.length; i++){
+                if(req.isAuthenticated()){
+                    if(req.user.id === results[i].iparty_id){
+                        list.push({
+                            "id" : results[i].id,
+                            "body": results[i].body,
+                            "wtime": results[i].wtime,
+                            "nickname" : results[i].nickname,
+                            "login" : true
+                        });
+                    } else {
+                        list.push({
+                            "id" : results[i].id,
+                            "body": results[i].body,
+                            "wtime": results[i].wtime,
+                            "nickname" : results[i].nickname,
+                            "login" : false
+                        });
+                    }
+                } else {
+                    list.push({
+                        "id" : results[i].id,
+                        "body": results[i].body,
+                        "wtime": results[i].wtime,
+                        "nickname" : results[i].nickname,
+                        "login" : false
+                    });
+                }
+            }
+
+            res.json({
+                "result" : {
                     "ediaryId" : e_id,
                     "page" : page,
                     "listPerPage" : limit,
-                    "list" : results
+                    "list" : list
                 }
-
-                });
+            });
         }
     })
 });
