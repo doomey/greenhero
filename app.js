@@ -53,8 +53,8 @@ var local = require('./routes/local');
 
 
 
-app.set('env', 'development');
-//app.set('env', 'production');
+//app.set('env', 'development');
+app.set('env', 'production');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
