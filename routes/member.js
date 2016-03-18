@@ -207,6 +207,7 @@ router.get('/me', isLoggedIn, function(req, res, next) {
                 next(err);
             } else {
                 logger.log('info', req.user.nickname+'님 배송지 변경');
+                logger.log('info', message);
                 res.json(message);
             }
         });
