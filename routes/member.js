@@ -45,7 +45,7 @@ router.post('/login', function(req, res, next) {
                             res.json({"message" : user.nickname + "님 환영합니다!"});
                         } else {
                             logger.log('info', 'ID '+ req.user.id +'님 구글로그인 연동');
-                            res.json({"message" : "구글 연동되었습니다. 환영합니다!"});
+                            res.json({"message" : "구글 연동되었습니다. 환영합니다! 'I AM GREENHERO'에서 닉네임을 바꿔주세요. 처음 닉네임은 이름입니다."});
                         }
                     }
                 });
