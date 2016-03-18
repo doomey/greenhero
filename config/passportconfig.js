@@ -63,10 +63,9 @@ module.exports = function(passport) {
                 connection.release();
                 callback(err);
              } else {
-                console.log('페이로드', parseToken.payload);
                 if(results.length === 0) {
-                   var insert = "insert into iparty(nickname, google_id, google_token, google_email, totalleaf, registration_token, google_name) "+
-                                "values(?, ?, ?, ?, 0, ?, " +
+                   var insert = "insert into iparty(nickname, google_id, google_token, google_email, totalleaf, registration_token, partytype, google_name) "+
+                                "values(?, ?, ?, ?, 0, ?, 1, " +
                                 "aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")) " +
                                 ")";
                    connection.query(insert, [!parseToken.payload.nickname? parseToken.payload.name : parseToken.payload.nickname, googleId, req.body.id_token, parseToken.payload.email, 0, req.body.registration_id, parseToken.payload.name], function(err, result) {
