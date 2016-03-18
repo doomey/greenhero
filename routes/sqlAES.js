@@ -11,11 +11,14 @@ exports.setServerKey = function(serverKey) {
 exports.encrypt = function(number) {
    number = parseInt(number);
    var enc = "";
-   for(var i = 1; i<number; i++) {
-      enc += " aes_encrypt(?, unhex(" + conn.escape(sk) + ")), ";
+   if(number === 1){
+      enc += " aes_encrypt(?, unhex(" + conn.escape(sk) + ")) ";
+   } else {
+      for(var i = 1; i<number; i++) {
+         enc += " aes_encrypt(?, unhex(" + conn.escape(sk) + ")), ";
+      }
+      enc += " aes_encrypt(?, unhex(" + conn.escape(sk) + ")) ";
    }
-
-   enc += " aes_encrypt(?, unhex(" + conn.escape(sk) + ")) ";
    return enc;
 }
 
