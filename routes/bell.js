@@ -46,8 +46,19 @@ exports.push = function() {
    }
    //select Iparty
    function selectIparty(connection, callback) {
+      var time;
 
-      var select = "select registration_token, date_format(CONVERT_TZ(now(),'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as time " +
+      var sql = "select date_format(CONVERT_TZ(now(),'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as time";
+      connection.query(sql, [], function(err, results) {
+         if(err) {
+            connection.release();
+            callback(err);
+         } else {
+            time = results[0].time;
+         }
+      });
+
+      var select = "select registration_token " +
          "from iparty "+
          "where nickname = ?";
       connection.query(select, [receivers], function(err, results) {
@@ -56,12 +67,13 @@ exports.push = function() {
             logger.log('error', err);
             callback(err);
          } else {
-            callback(null, results[0].registration_token);
+            callback(null, results[0].registration_token, time);
          }
       });
    }
    //
-   function sendMessage(r_token, callback) {
+   function sendMessage(r_token, time, callback) {
+
       var message = new gcm.Message({
          "collapseKey": 'demo',
          "delayWhileIdle": true,
@@ -70,7 +82,8 @@ exports.push = function() {
             "type" : type,
             "articleId" : articleid,
             "who": user,
-            "message": inputMessage
+            "message": inputMessage,
+            "date" : time
          }
       });
 
