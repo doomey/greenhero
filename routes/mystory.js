@@ -282,7 +282,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                 callback(err);
                             } else {
                                 tLeaf = results[0].tLeaf;
-                                logger.log('info', "오늘 획득 한 총 나뭇잎 개수 : " + tLeaf);
+                                logger.log('info', req.user.nickname+"님 오늘 획득 한 총 나뭇잎 개수 : " + tLeaf);
                                 callback(null, tLeaf);
                             }
                         });
@@ -337,7 +337,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                 callback(err);
                             } else {
                                 userLeaf = result[0].tLeaf;
-                                logger.log('info', "사용자의 총 나뭇잎 개수 " + userLeaf);
+                                logger.log('info', req.user.nickname+"님의 총 나뭇잎 개수 " + userLeaf);
                                 callback(null);
                             }
                         })
@@ -361,7 +361,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                             } else {
                                 connection.commit();
                                 connection.release();
-                                logger.log("업데이트가 완료되었습니다.");
+                                logger.log("현재 보유한 나뭇잎의 업데이트가 완료되었습니다.");
                                 callback(null);
                             }
                         });
