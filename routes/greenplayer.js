@@ -43,12 +43,12 @@ router.get('/', function(req, res, next){
             } else {
                 if(results.length){
                     var list=[];
-                    async.eachSeries(results, function(element, callback){
+                    async.eachSeries(results, function(result, callback){
                         list.push({
-                            "epId" : element.id,
-                            "title" : element.title,
-                            "thumbnail" : element.photourl,
-                            "epName" : element.cname
+                            "epId" : result.id,
+                            "title" : result.title,
+                            "thumbnail" : result.photourl,
+                            "epName" : result.cname
                         });
                         callback(null);
                     }, function(err){
