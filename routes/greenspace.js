@@ -435,7 +435,10 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                 callback(err);
             } else {
                 replyId = result.insertId;
-                logger.log('info', '생성된 댓글 ID :' + replyId);
+                logger.log('debug', '생성된 댓글 ID :' + replyId);
+                logger.log('debug', '생성된 댓글 내용 : ' + body);
+                logger.log('debug', '생성된 댓글이 속한 게시글 : ' + ediary_id);
+                logger.log('debug', '댓글 작성한 사람 : ' + iparty_id);
                 callback(null, connection);
             }
         });

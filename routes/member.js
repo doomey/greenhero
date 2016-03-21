@@ -20,26 +20,27 @@ function isLoggedIn(req, res, next) {
 
 router.post('/login', function(req, res, next) {
     if(req.secure) {
-        //logger.log('debug', req.body);
+        logger.log('debug', req.body);
         //logger.log('info', req.body);
         passport.authenticate('google-id-token', function(err, user, info) {
-            //logger.log('debug', user);
+            logger.log('debug', user);
             //logger.log('info', user);
             if(err) {
-                //logger.log('error', user);
+                logger.log('warn', user);
                 next(err);
             } else if(!user){
                 var err = new Error('유효한 토큰이 아닙니다...');
                 err.code = "err001";
                 err.status = 401;
-                //logger.log('error', err);
+                logger.log('warn', err);
                 next(err);
             } else {
                 req.logIn(user, function(err) {
                     if(err) {
-                        //logger.log('error', err);
+                        logger.log('warn', err);
                         next(err);
                     } else {
+                        logger.log('info', '로그인 성공');
                         if(req.user.nickname !== undefined) {
                             logger.log('info', req.user.nickname + '님 로그인');
                             res.json({"message" : user.nickname + "님 환영합니다!"});
