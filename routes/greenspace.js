@@ -520,7 +520,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                                 callback(err);
                             } else {
                                 userLeaf = result[0].tLeaf;
-                                logger.log('info', "사용자의 총 나뭇잎 개수 " + userLeaf);
+                                logger.log('info', req.user.nickname+"님의 총 나뭇잎 개수 " + userLeaf);
                                 callback(null);
                             }
                         })
