@@ -439,6 +439,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
                 logger.log('debug', '생성된 댓글 내용 : ' + body);
                 logger.log('debug', '생성된 댓글이 속한 게시글 : ' + ediary_id);
                 logger.log('debug', '댓글 작성한 사람 : ' + iparty_id);
+                console.log('댓글ID : ' + replyId + ', 댓글 내용 : ' + body);
                 callback(null, connection);
             }
         });
