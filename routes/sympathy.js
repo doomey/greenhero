@@ -43,7 +43,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                logger.log('error', req.user.nickname+"님 " + err.message);
                callback(err);
             }
-         });
+      });
 
          //하트를 1 증가시키고 푸쉬 메시지
          var select = "SELECT e.id as id, e.heart as heart, i.nickname as nickname "+
@@ -67,7 +67,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         callback(null,
                            {
                               "result" : {
-                                 "onHeart" : true,
+                                 "onheart" : 0,
                                  "message" : results[0].nickname+"님에게 공감하였습니다."
                               }
                            });
@@ -118,7 +118,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         callback(null,
                            {
                               "result" : {
-                                 "onHeart" : false,
+                                 "onheart" : 1,
                                  "message" : results[0].nickname+"님이 공감을 취소하였습니다."
                               }
                            });
