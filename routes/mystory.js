@@ -199,6 +199,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
             form.parse(req, function (err, fields, files) {
                 var file = files['photo'];
+                logger.log('debug', '필즈 값 : ' + fields + ', 파일은 : ' + file);
+                console.log('필즈 값 : ' + fields + ', 파일은 : ' + file);
                 var mimeType = mime.lookup(path.basename(file.path));
                 var s3 = new AWS.S3({
                     "accessKeyId" : s3Config.key,
