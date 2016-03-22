@@ -23,6 +23,12 @@ exports.set = function(sender, receiver, inputType, id) {
          body: user + "님이 공감하였습니다!",
          icon: 'pushLike' //안드로이드 리소스에 집어넣을것
       };
+   } else if(inputType === "unsympathy") {
+      noti = {
+         title: '공감이 취소되었습니다.',
+         body: user + "님이 공감을 취소하였습니다.",
+         icon: 'pushUnLike'
+      };
    }
    else if(inputType === "reply") {
       noti = {
