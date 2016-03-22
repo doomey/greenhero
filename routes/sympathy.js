@@ -68,6 +68,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                            {
                               "result" : {
                                  "onheart" : 0,
+                                 "heart" : results[0].heart + 1,
                                  "message" : results[0].nickname+"님에게 공감하였습니다."
                               }
                            });
@@ -119,6 +120,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                            {
                               "result" : {
                                  "onheart" : 1,
+                                 "heart" : results[0].heart - 1,
                                  "message" : results[0].nickname+"님이 공감을 취소하였습니다."
                               }
                            });
