@@ -92,15 +92,23 @@ router.get('/', function(req, res, next) {
 
 router.get('/:ediaryId', function(req, res, next) {
     //todo 1 : db에서 select
-
     var ediaryId = parseInt(req.params.ediaryId);
-
+    var h_diary_id;
+    var iparty_id;
+    if(req.user === undefined) {
+        iparty_id = null;
+        h_diary_id = null;
+    } else {
+        iparty_id = req.user.id;
+        h_diary_id = ediaryId;
+    }
 
     function selectGreenspace(connection, callback) {
         var sql = "SELECT e.id as id, e.title as title, i.nickname as nickname, " +
             "date_format(CONVERT_TZ(e.wdatetime, \'+00:00\', \'+9:00\'), \'%Y-%m-%d %H:%i:%s\') as wtime," +
             "e.heart as heart, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
-            "e.content as content, p.photourl as photourl " +
+            "e.content as content, p.photourl as photourl, " +
+            "case when (select id from heart where iparty_id = ? and e_diary_id = ?) then true else false end as onheart " +
             "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
             "left join (select ediary_id, count(id) as rAmount " +
             "from reply " +
@@ -108,7 +116,7 @@ router.get('/:ediaryId', function(req, res, next) {
             "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
             "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.background_id = b.refer_id) " +
             "where e.id = ?";
-        connection.query(sql, [ediaryId, ediaryId], function (err, results) {
+        connection.query(sql, [iparty_id, h_diary_id, ediaryId, ediaryId], function (err, results) {
             if (err) {
                 connection.release();
                 callback(err);
@@ -162,6 +170,7 @@ router.get('/:ediaryId', function(req, res, next) {
                     "nickname": results[0].nickname,
                     "wtime": results[0].wtime,
                     "heart": results[0].heart,
+                    "onheart" : results[0].onheart,
                     "rAmount": results[0].rAmount,
                     "backgroundUrl": results[0].backgroundUrl,
                     "content": results[0].content,
