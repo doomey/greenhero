@@ -104,11 +104,14 @@ router.get('/:ediaryId', function(req, res, next) {
     }
 
     function selectGreenspace(connection, callback) {
-        var sql = "SELECT i.nickname as nickname, " +
+        var sql = "SELECT i.nickname as nickname, ifnull(r.rAmount,0) as rAmount, b.photourl as backgroundUrl, " +
             "date_format(CONVERT_TZ(e.wdatetime, \'+00:00\', \'+9:00\'), \'%Y-%m-%d %H:%i:%s\') as wtime," +
-            "e.content as content, " +
+            "e.content as content, p.photourl as photourl, " +
             "case when (select id from heart where iparty_id = ? and e_diary_id = ?) then true else false end as onheart " +
-            "FROM e_diary e join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+            "FROM e_diary e left join (select id, nickname from iparty) i on(e.iparty_id = i.id) " +
+                           "left join (select ediary_id, count(ediary_id) as rAmount from reply group by ediary_id) r on (e.id = r.ediary_id) " +
+                           "left join (select refer_id, photourl from photos where refer_type = 1) p on (e.id = p.refer_id) " +
+                           "left join (select refer_id, photourl from photos where refer_type = 4) b on (e.background_id = b.refer_id) " +
             "where e.id = ?";
         connection.query(sql, [iparty_id, h_diary_id, ediaryId], function (err, results) {
             if (err) {
@@ -162,6 +165,9 @@ router.get('/:ediaryId', function(req, res, next) {
                     "nickname": results[0].nickname,
                     "wtime": results[0].wtime,
                     "content": results[0].content,
+                    "rAmount" : results[0].rAmount,
+                    "backgroundUrl": results[0].backgroundUrl,
+                    "photoUrl": results[0].photourl,
                     "onheart" : results[0].onheart
                 };
                 var result = {
