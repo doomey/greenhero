@@ -34,12 +34,12 @@ router.get('/', function(req, res, next){
             } else {
                 if(results.length){
                     var list = [];
-                    async.eachSeries(results, function(element, callback){
+                    async.eachSeries(results, function(result, callback){
                         list.push({
-                            "id" : element.id,
-                            "type" : element.board_id,
-                            "title" : element.title,
-                            "date" : element.GMT9
+                            "id" : result.id,
+                            "type" : result.board_id,
+                            "title" : result.title,
+                            "date" : result.GMT9
                         });
                         callback(null);
                     }, function(err){

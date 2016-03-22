@@ -43,12 +43,12 @@ router.get('/', function(req, res, next){
             } else {
                 if(results.length){
                     var list=[];
-                    async.eachSeries(results, function(element, callback){
+                    async.eachSeries(results, function(result, callback){
                         list.push({
-                            "epId" : element.id,
-                            "title" : element.title,
-                            "thumbnail" : element.photourl,
-                            "epName" : element.cname
+                            "epId" : result.id,
+                            "title" : result.title,
+                            "thumbnail" : result.photourl,
+                            "epName" : result.cname
                         });
                         callback(null);
                     }, function(err){
@@ -212,7 +212,7 @@ router.post('/', isLoggedIn, function(req, res, next){
                                     callback(err);
                                 } else {
                                     userLeaf = result[0].tLeaf;
-                                    logger.log('info', "사용자의 총 나뭇잎 개수 " + userLeaf);
+                                    logger.log('info', req.user.nickname+"님의 총 나뭇잎 개수 " + userLeaf);
                                     callback(null);
                                 }
                             })

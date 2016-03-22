@@ -305,11 +305,11 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
                                 "list": []
                             }
                         };
-                        async.eachSeries(results, function(element, callback) {
+                        async.eachSeries(results, function(result, callback) {
                             message.result.list.push({
-                                "leafType": element.leaftype,
-                                "leafApplydate": element.GMT9,
-                                "leafChangedamount": element.changedamount
+                                "leafType": result.leaftype,
+                                "leafApplydate": result.GMT9,
+                                "leafChangedamount": result.changedamount
                             });
                             callback(null);
                         }, function(err) {
@@ -380,17 +380,17 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
                 };
 
                 var totalprice = 0;
-                async.eachSeries(results, function(element, callback) {
+                async.eachSeries(results, function(result, callback) {
                     message.result.items.push({
-                        "cartId" : element.cartId,
-                        "itemId": element.greenitems_id,
-                        "picture": element.picture,
-                        "name": element.name,
-                        "price": element.price,
-                        "quantity": element.quantity,
-                        "iPrice": element.iprice
+                        "cartId" : result.cartId,
+                        "itemId": result.greenitems_id,
+                        "picture": result.picture,
+                        "name": result.name,
+                        "price": result.price,
+                        "quantity": result.quantity,
+                        "iPrice": result.iprice
                     });
-                    totalprice += element.iprice;
+                    totalprice += result.iprice;
                     callback(null);
                 }, function(err) {
                     if(err) {

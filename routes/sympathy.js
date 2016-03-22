@@ -53,13 +53,21 @@ router.post('/', isLoggedIn, function(req, res, next) {
          } else {
             //push
             bell.set(req.user.nickname, info.nickname, "sympathy", info.id);
-            bell.push();
-            callback(null,
-                {
-                   "result" : {
-                     "message" : info.nickname+"님에게 공감하였습니다."
-                   }
-                });
+            if(bell.push() === true) {
+               callback(null,
+                  {
+                     "result" : {
+                        "message" : info.nickname+"님에게 공감하였습니다."
+                     }
+                  });
+            } else {
+               callback(null,
+                  {
+                     "result" : {
+                        "message" : info.nickname+"님께 공감메시지를 전송하지 못하였습니다.."
+                     }
+                  });
+            }
          }
       });
    }

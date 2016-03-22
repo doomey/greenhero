@@ -46,8 +46,19 @@ exports.push = function() {
    }
    //select Iparty
    function selectIparty(connection, callback) {
+      var time;
 
-      var select = "select registration_token, date_format(CONVERT_TZ(now(),'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as time " +
+      var sql = "select date_format(CONVERT_TZ(now(),'+00:00','+9:00'),'%Y-%m-%d %H:%i:%s') as time";
+      connection.query(sql, [], function(err, results) {
+         if(err) {
+            connection.release();
+            callback(err);
+         } else {
+            time = results[0].time;
+         }
+      });
+
+      var select = "select registration_token " +
          "from iparty "+
          "where nickname = ?";
       connection.query(select, [receivers], function(err, results) {
@@ -56,12 +67,13 @@ exports.push = function() {
             logger.log('error', err);
             callback(err);
          } else {
-            callback(null, results);
+            callback(null, results[0].registration_token, time);
          }
       });
    }
    //
-   function sendMessage(info, callback) {
+   function sendMessage(r_token, time, callback) {
+
       var message = new gcm.Message({
          "collapseKey": 'demo',
          "delayWhileIdle": true,
@@ -71,7 +83,7 @@ exports.push = function() {
             "articleId" : articleid,
             "who": user,
             "message": inputMessage,
-            "date" : info.time
+            "date" : time
          }
       });
 
@@ -80,7 +92,7 @@ exports.push = function() {
       var server_access_key = "AIzaSyADRF0g8ms7lVksTmV8L0Ln5r76eMGdaS8";
       var sender = new gcm.Sender(server_access_key);
       var registrationIds = [];
-      registrationIds.push(/*info.registration_token*/"dijmJCe6Glo:APA91bGMulwXuthoCIIPdVztdGYExFGR4FZQ8s7pDgTbjEn5w6JDjkAXCk3QdYkLH4_1ejHf3vdsX7KSh-0zuWsqfA3wjjlxtjHp8IWGbtD1_ElWsBZmM5xGM3drJjcg5jtWwyZzrmzM");
+      registrationIds.push(r_token);
 
       sender.send(message, registrationIds, 4, function(err, result) {
          if(err) {
