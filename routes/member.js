@@ -78,15 +78,14 @@ router.get('/me', isLoggedIn, function(req, res, next) {
 
         function selectLeaf(connection, callback) {
             var sql = "select sum(changedamount) as toleaf " +
-                "from leafhistory " +
-                "where iparty_id = ? and to_days(date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s')) = " +
-                "                        to_days(date_format(CONVERT_TZ(now(), '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s'))";
+                      "from leafhistory " +
+                      "where iparty_id = 5  and leaftype != 0 and to_days(applydate) = to_days(now())";
             connection.query(sql, [req.user.id], function(err, results) {
                 if (err) {
                     connection.release();
                     callback(err);
                 } else {
-                    resentleaf = parseInt(results[0].toleaf);
+                    resentleaf = parseInt(results[0].toleaf || 0);
                     callback(null, connection);
                 }
             });
