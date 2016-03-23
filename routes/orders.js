@@ -37,12 +37,12 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
 
             //주문자의 배송관련 정보
-            var name = req.body.name;
-            var phone1 = req.body.phone1;
-            var phone2 = req.body.phone2;
-            var adcode = req.body.adcode;
-            var address = req.body.address;
-            var care = req.body.care;
+            var receiver = req.body.receiver || "";
+            var phone1 = req.body.phone1 || "";
+            var phone2 = req.body.phone2 || "";
+            var adcode = req.body.adcode || "";
+            var address = req.body.address || "";
+            var care = req.body.care || "";
 
             function getConnection(callback) {
                 pool.getConnection(function(err, connection) {
@@ -81,7 +81,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                     "phone" : results[0].phone
                                 },
                                 "aInfo" : {
-                                    "name" : name,
+                                    "name" : req.user.name,
+                                    "receiver" : receiver,
                                     "phone1" : phone1,
                                     "phone2" : phone2,
                                     "adCode" : adcode,
@@ -152,6 +153,13 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                     //2. orders테이블에 insert -> 물품의 총 가격이 totalleaf보다 높으면 rollback
                     function insertOrders(message, TP, callback) {
+                        var name = req.body.name;
+                        var phone1 = req.body.phone1;
+                        var phone2 = req.body.phone2;
+                        var adcode = req.body.adcode;
+                        var address = req.body.address;
+                        var care = req.body.care;
+
                         //sqlAes.set(connection, serverKey);
                         var insert =  "insert into orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
                                       //"values(?, date(now()), ?, ?, ?, ?, ?, ?)";
@@ -197,19 +205,17 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     //3. orderdetails테이블에 물품id별로 insert
                     function insertOrderdetails(message, orderId, TP, callback) {
                         var index = 0;
-                        async.each(iid, function (element, callback) {
+                        async.each(iid, function (element, cb) {
                             var insert = "insert into orderdetails(order_id, quantity, greenitems_id) " +
                                 "values(?, ?, ?)";
-                            connection.query(insert, [orderId, qt[index], element], function (err, result) {
+                            connection.query(insert, [orderId, qt[index], element], function (err) {
                                 if (err) {
                                     connection.release();
-                                    callback(err);
-                                } else {
-
+                                    //cb(err);
                                 }
                             });
                             index++;
-                            callback(null);
+                            cb(null);
                         }, function (err, result) {
                             if (err) {
                                 connection.rollback();
@@ -240,7 +246,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                             callback(err);
                         } else {
                             connection.commit();
-                            connection.release();
+                            //connection.release();
                             callback(null, message);
                         }
                     });
@@ -284,26 +290,60 @@ router.post('/setaddress', function(req, res, next) {
         }
 
         function insertDaddress(connection, callback) {
-            var insert =  "insert into daddress(ad_code, iparty_id, name, receiver, phone, add_phone, address) "+
-                          "values(?, ?, " +
-                          sqlAes.encrypt(5)
-                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                          + ")";
-            connection.query(insert, [adcode, req.user.id, req.user.name, name, phone1, phone2, address], function(err, result) {
-               connection.release();
+            var select = "select id "+
+                         "from daddress "+
+                         "where iparty_id = ?";
+            connection.query(select, [req.user.id], function(err, results) {
                 if(err) {
-                   callback(err);
-               } else {
-                    var message = {
-                        "result" : {
-                            "message" : "주소가 등록되었습니다."
-                        }
-                    };
-                    callback(null, message);
+                    connection.release();
+                    callback(err);
+                } else {
+                    if(!results.length) {
+                        var insert =  "insert into daddress(ad_code, iparty_id, name, receiver, phone, add_phone, address) "+
+                           "values(?, ?, " +
+                           sqlAes.encrypt(5)
+                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                           + ")";
+                        connection.query(insert, [adcode, req.user.id, req.user.name, name, phone1, phone2, address], function(err, result) {
+                            connection.release();
+                            if(err) {
+                                callback(err);
+                            } else {
+                                var message = {
+                                    "result" : {
+                                        "message" : "주소가 등록되었습니다."
+                                    }
+                                };
+                                callback(null, message);
+                            }
+                        });
+                    } else {
+                        var update = "update daddress " +
+                                     "set name = aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), "+
+                                     "    receiver = aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                     "    phone = aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                     "    add_phone = aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
+                                     "    ad_code = ?, " +
+                                     "    address = aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")) " +
+                                     "where iparty_id = ?";
+                        connection.query(update, [req.user.name, name, phone1, phone2, adcode, address, req.user.id], function(err, result) {
+                            connection.release();
+                            if(err) {
+                                callback(err);
+                            } else {
+                                var message = {
+                                    "result" : {
+                                        "message" : "주소가 등록되었습니다."
+                                    }
+                                };
+                                callback(null, message);
+                            }
+                        });
+                    }
                 }
             });
         }
@@ -325,6 +365,59 @@ router.post('/setaddress', function(req, res, next) {
         next(err);
     }
 
+});
+
+router.get('/getaddress', function(req, res, next) {
+    if(req.secure) {
+        function getConnection(callback) {
+            pool.getConnection(function(err, connection) {
+                if(err) {
+                    callback(err);
+                } else {
+                    callback(null, connection);
+                }
+            })
+        }
+
+        function selectDaddress(connection, callback) {
+            var select = "select ad_code as adcode, " + sqlAes.decrypt("name") + sqlAes.decrypt("receiver") + sqlAes.decrypt("phone") + sqlAes.decrypt("add_phone") + sqlAes.decrypt("address", true) +
+                         "from daddress " +
+                         "where iparty_id = ?";
+            connection.query(select, [req.user.id], function(err, results) {
+                connection.release();
+                if(err) {
+                    callback(err);
+                } else {
+                    var message = {
+                        "result" : {
+                            "name" : results[0].name,
+                            "receiver" : results[0].receiver,
+                            "phone" : results[0].phone,
+                            "add_phone" : results[0].add_phone,
+                            "adcode" : results[0].adcode,
+                            "address" : results[0].address
+                        }
+                    };
+                    callback(null, message);
+                }
+            });
+        }
+
+        async.waterfall([getConnection, selectDaddress], function(err, message) {
+            if(err) {
+                err.code = "err017";
+                err.message = "주소 불러오기에 실패하였습니다...";
+                logger.log('error', err);
+                next(err);
+            } else {
+                res.json(message);
+            }
+        });
+    } else {
+        var err = new Error('SSL/TLS Upgreade Required...');
+        err.status = 426;
+        next(err);
+    }
 });
 
 module.exports = router;
