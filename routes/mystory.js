@@ -414,7 +414,6 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
     var content = req.body.content;
     var bgId = req.body.bgId;
     if (!bgId) {
-      console.log("배경 없음!!!");
       function emptyUpdate(connection, callback) {
         var sql = "update e_diary " +
           "set title = ?, content = ?, wdatetime = now() " +
@@ -442,7 +441,6 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
       });
 
     } else {
-      console.log("배경있음!!!");
       function bgUpdate(connection, callback) {
         var sql = "update e_diary " +
           "set title = ?, content = ?, wdatetime = now(), background_id = ? " +
@@ -558,7 +556,6 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
                   connection.release();
                   callback(err);
                 } else {
-                  console.log("플래그!!!!!!!! : " + flag)
                   if (flag === 0) {
                     var sql2 = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) " +
                       "values(?, now(), ?, ?, ?, 1, ?)";
