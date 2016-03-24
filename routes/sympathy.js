@@ -58,6 +58,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                   "set heart = ? "+
                   "where id = ?";
                connection.query(update, [results[0].heart + 1, results[0].id], function(err, result) {
+                  connection.release();
                   if(err) {
                      callback(err);
                   } else {
@@ -97,7 +98,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
          });
 
-         //하트를 0 감소시키고 푸쉬 메시지
+         //하트를 1 감소시키고 푸쉬 메시지
          var select = "SELECT e.id as id, e.heart as heart, i.nickname as nickname "+
             "FROM e_diary e join iparty i on (e.iparty_id = i.id) "+
             "where e.id = ?";
@@ -110,6 +111,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                   "set heart = ? "+
                   "where id = ?";
                connection.query(update, [results[0].heart - 1, results[0].id], function(err, result) {
+                  connection.release();
                   if(err) {
                      callback(err);
                   } else {
