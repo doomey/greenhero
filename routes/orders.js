@@ -271,7 +271,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
     });
 
-router.post('/setaddress', function(req, res, next) {
+router.post('/setaddress', isLoggedIn, function(req, res, next) {
     if(req.secure) {
         var name = req.body.name;
         var phone1 = req.body.phone1;
@@ -367,7 +367,7 @@ router.post('/setaddress', function(req, res, next) {
 
 });
 
-router.get('/getaddress', function(req, res, next) {
+router.get('/getaddress', isLoggedIn, function(req, res, next) {
     if(req.secure) {
         function getConnection(callback) {
             pool.getConnection(function(err, connection) {
