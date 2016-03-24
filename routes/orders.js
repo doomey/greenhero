@@ -388,17 +388,31 @@ router.get('/getaddress', isLoggedIn, function(req, res, next) {
                 if(err) {
                     callback(err);
                 } else {
-                    var message = {
-                        "result" : {
-                            "name" : results[0].name,
-                            "receiver" : results[0].receiver,
-                            "phone" : results[0].phone,
-                            "add_phone" : results[0].add_phone,
-                            "adcode" : results[0].adcode,
-                            "address" : results[0].address
-                        }
-                    };
-                    callback(null, message);
+                    if(!results.length) {
+                        var message = {
+                            "result" : {
+                                "name" : "",
+                                "receiver" : "",
+                                "phone" : "",
+                                "add_phone" : "",
+                                "adcode" : "",
+                                "address" : ""
+                            }
+                        };
+                        callback(null, message);
+                    } else {
+                        var message = {
+                            "result" : {
+                                "name" : results[0].name,
+                                "receiver" : results[0].receiver,
+                                "phone" : results[0].phone,
+                                "add_phone" : results[0].add_phone,
+                                "adcode" : results[0].adcode,
+                                "address" : results[0].address
+                            }
+                        };
+                        callback(null, message);
+                    }
                 }
             });
         }
