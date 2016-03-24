@@ -560,6 +560,43 @@ router.put('/me/baskets', function(req, res, next) {
 
 });
 
+router.delete('/me/baskets/:itemid', isLoggedIn, function(req, res, next) {
+    var itemid = req.params.itemid;
+
+    function getConnection(callback) {
+        pool.getConnection(function(err, connection) {
+            if(err) {
+                callback(err);
+            } else {
+                callback(null, connection);
+            }
+        });
+    }
+
+    function deleteCart(connection, callback) {
+        var deletequery = "delete from cart " +
+           "where id = ? and iparty_id = ?";
+        connection.query(deletequery, [itemid, req.user.id], function (err, result) {
+            connection.release();
+            if (err) {
+                callback(err);
+            } else {
+                callback(null, {"message" : "장바구니에서 상품을 삭제하였습니다."});
+            }
+        });
+    }
+
+    async.waterfall([getConnection, deleteCart], function(err, message) {
+        if(err) {
+            err.message = "장바구니에서 상품을 삭제하지 못했습니다.";
+            logger.log('error', req.user.nickname+"님이 장바구니에서 "+ itemid + "번 상품을 삭제하지 못했습니다.");
+            next(err);
+        } else {
+            logger.log('info', req.user.nickname+"님이 장바구니에서 "+ itemid + "번 상품을 삭제하였습니다.");
+            res.json(message);
+        }
+    });
+})
 
 
 module.exports = router;
