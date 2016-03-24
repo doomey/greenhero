@@ -29,7 +29,7 @@ function isLoggedIn(req, res, next) {
 
 
 router.get('/', function(req, res, next) {
-    //todo 1 : db에서 select
+    //db에서 select
     var page = parseInt(req.query.page);
     page = (isNaN(page))? 1 : page;
     page = (page < 1)? 1 : page;
@@ -58,8 +58,8 @@ router.get('/', function(req, res, next) {
     async.waterfall([getConnection, selectGreenspace], function (err, results) {
         if (err) {
             var err ={
-                "code" : "err006",
-                "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
+                "code" : "err008",
+                "message" : "GREEN SPACE 목록을 불러올 수 없습니다."
             };
             logger.log('error', err);
             next(err);
@@ -91,7 +91,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/:ediaryId', function(req, res, next) {
-    //todo 1 : db에서 select
+    // db에서 select
     var ediaryId = parseInt(req.params.ediaryId);
     var h_diary_id;
     var iparty_id;
@@ -147,16 +147,16 @@ router.get('/:ediaryId', function(req, res, next) {
     async.waterfall([getConnection, selectGreenspace, resentGreenspace], function (err, results) {
         if (err) {
             var err ={
-                "code" : "err006",
-                "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
+                "code" : "err009",
+                "message" : "GREEN SPACE 상세를 불러올 수 없습니다."
             };
             logger.log('error', err);
             next(err);
         } else {
             if(results.length===0){
                 var err ={
-                    "code" : "err006",
-                    "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
+                    "code" : "err009",
+                    "message" : "GREEN SPACE 상세를 불러올 수 없습니다."
                 };
                 logger.log('error', err);
                 next(err);
@@ -286,8 +286,8 @@ router.get('/searching', function(req, res, next) {
     async.waterfall([getConnection, selectGreenspace], function (err, results) {
         if (err) {
             var err ={
-                "code" : "err006",
-                "message" : "GREEN SPACE 을(를) 불러올 수 없습니다."
+                "code" : "err008",
+                "message" : "GREEN SPACE 목록을 불러올 수 없습니다."
             };
             logger.log('error', err);
             next(err);
@@ -352,8 +352,8 @@ router.get('/:ediaryId/replies', function(req, res, next) {
     async.waterfall([getConnection, selectReview], function (err, results){
         if(err) {
             var err = {
-                "code" : "err007",
-                "message" : "댓글을 불러올 수 없습니다."
+                "code" : "err010",
+                "message" : "댓글 목록을 불러올 수 없습니다."
             }
             logger.log('error', err);
             next(err);
@@ -573,7 +573,7 @@ router.post('/:ediaryId/replies', isLoggedIn, function(req, res, next) {
     async.waterfall([getConnection, selectWriter, insertReply, insertMystory], function (err, results) {
         if (err) {
             var err = {
-                "code" : "err008",
+                "code" : "err011",
                 "message" : "댓글을 작성할 수 없습니다."
             }
             logger.log('error', err);
@@ -640,7 +640,7 @@ router.put('/:ediaryId/replies/:replyId', isLoggedIn, function(req, res, next) {
     async.waterfall([getConnection, compareUser, updateReply], function (err, result) {
         if (err) {
             var err = {
-                "code" : "err009",
+                "code" : "err012",
                 "message" : "댓글을 수정할 수 없습니다."
             };
             logger.log('error', err);
