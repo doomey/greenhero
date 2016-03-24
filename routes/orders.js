@@ -222,7 +222,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     //4. leafhistory테이블에서 총 구매량insert
                     function insertLeafhistory(message, TP, callback) {
                         var insert = "insert into leafhistory(applydate, leaftype, changedamount, iparty_id) "+
-                                     "values(date(now()), 0, ?, ?)";
+                                     "values(now(), 0, ?, ?)";
                         connection.query(insert, [TP, req.user.id], function(err, result) {
                             if(err) {
                                 callback(err);
