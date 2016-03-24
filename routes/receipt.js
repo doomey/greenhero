@@ -90,7 +90,7 @@ router.get('/', isLoggedIn, function(req, res, next) {
         }
         async.waterfall([getConnection, getTotal, selectOrders], function(err, message) {
             if(err) {
-                err.code = "err022";
+                err.code = "err026";
                 err.message = "구매내역을 불러올 수 없습니다.";
                 logger.log('error', err);
                 next(err);
