@@ -410,16 +410,19 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
   var iparty_id = parseInt(req.user.id); //실제로는 인증정보에서 가져옴
   var ediary_id = parseInt(req.params.ediaryId);
   if (req.headers['content-type'] === 'application/x-www-form-urlencoded') {
+    logger.log('debug', '사진이 없을 때 진입')
     var title = req.body.title;
     var content = req.body.content;
     var bgId = req.body.bgId;
     if (!bgId) {
+      logger.log('debug', '배경지정 안 했을 때 진입');
       function emptyUpdate(connection, callback) {
         var sql = "update e_diary " +
           "set title = ?, content = ?, wdatetime = now() " +
           "where iparty_id = ? and id = ?";
         connection.query(sql, [title, content, iparty_id, ediary_id], function (err, result) {
           if (err) {
+            logger.log('warn', 'emptyUpdate 쿼리 오류');
             connection.release();
             callback(err);
           } else {
@@ -430,6 +433,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
 
       async.waterfall([getConnection, emptyUpdate], function (err, results) {
         if (err) {
+          logger.log('warn', 'waterfall 오류');
           var err = {
             "code": "err017",
             "message": "MY STOTY를 수정할 수 없습니다."
@@ -441,12 +445,14 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
       });
 
     } else {
+      logger.log('debug', '배경지정 했을 때 진입');
       function bgUpdate(connection, callback) {
         var sql = "update e_diary " +
           "set title = ?, content = ?, wdatetime = now(), background_id = ? " +
           "where iparty_id = ? and id = ?";
         connection.query(sql, [title, content, bgId, iparty_id, ediary_id], function (err, result) {
           if (err) {
+            logger.log('warn', 'bgUpdate 쿼리 오류');
             connection.release();
             callback(err);
           } else {
@@ -457,6 +463,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
 
       async.waterfall([getConnection, bgUpdate], function (err, results) {
         if (err) {
+          logger.log('warn', 'waterfall 오류');
           var err = {
             "code": "err017",
             "message": "MY STORY를 수정할 수 없습니다."
@@ -469,6 +476,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
 
     }
   } else {
+    logger.log('debug', '사진지정 했을 때 진입')
     function deleteS3Photo(connection, callback) {
       var flag;
       var sql = "select modifiedfilename " +
@@ -476,6 +484,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
         "where refer_type = 1 and refer_id = ?";
       connection.query(sql, [ediary_id], function (err, results) {
         if (err) {
+          logger.log('warn', 'deleteS3Photo 쿼리 오류');
           connection.release();
           callback(err);
         } else if (results.length === 0) {
@@ -536,7 +545,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
           })
           .send(function (err, data) {
             if (err) {
-              logger.log('error', err);
+              logger.log('warn', 's3 업로드 오류');
               callback(err);
             } else {
               logger.log('info', "데이터의 정보 " + data);
@@ -552,6 +561,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
                 "where iparty_id = ? and id = ?";
               connection.query(sql, [fields['title'], fields['content'], iparty_id, ediary_id], function (err, result) {
                 if (err) {
+                  logger.log('warn', 'updateMystory update 쿼리 오류 1');
                   connection.rollback();
                   connection.release();
                   callback(err);
@@ -561,6 +571,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
                       "values(?, now(), ?, ?, ?, 1, ?)";
                     connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
                       if (err) {
+                        logger.log('warn', 'updateMystory insert 쿼리 오류');
                         connection.rollback();
                         connection.release();
                         callback(err);
@@ -578,6 +589,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
                       "where refer_type = 1 and refer_id = ?";
                     connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
                       if (err) {
+                        logger.log('warn', 'updateMystory update 쿼리 오류 2');
                         connection.rollback();
                         connection.release();
                         callback(err);
@@ -599,6 +611,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
     }
     async.waterfall([getConnection, deleteS3Photo, updateMystory], function (err, results) {
       if (err) {
+        logger.log('warn', 'updateMystory waterfall 오류');
         var err = {
           "code": "err017",
           "message": "MY STORY를 수정할 수 없습니다."
