@@ -161,11 +161,11 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         var care = req.body.care;
 
                         //sqlAes.set(connection, serverKey);
-                        var insert =  "insert into orders(adcode, iparty_id, date, receiver, phone, addphone, address, care) "+
-                                      "values(?, ?, now(), " +
-                                      sqlAes.encrypt(5)
+                        var insert =  "insert into orders(adcode, iparty_id, care, date, receiver, phone, addphone, address) "+
+                                      "values(?, ?, ?, now(), " +
+                                      sqlAes.encrypt(4)
                                        + ")";
-                        connection.query(insert, [adcode, req.user.id, name, phone1, phone2, address, care], function(err, result) {
+                        connection.query(insert, [adcode, req.user.id, care, name, phone1, phone2, address], function(err, result) {
                             if(err) {
                                 connection.rollback();
                                 connection.release();
