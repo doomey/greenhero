@@ -142,7 +142,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
    async.waterfall([getConnection, doHeart], function(err, message) {
       if(err) {
-         err.code = "err010";
+         err.code = "err013";
          logger.log('error', req.user.nickname + '님이 ' + err.message);
          next(err);
       } else {
