@@ -275,7 +275,8 @@ router.get('/me/leafs', isLoggedIn, function(req, res, next) {
         function selectLeafhistory(connection, callback) {
             var select = "select id, date_format(CONVERT_TZ(applydate, '+00:00', '+9:00'), '%Y-%m-%d %H:%i:%s') as 'GMT9', leaftype, changedamount "+
                 "from leafhistory "+
-                "where iparty_id = ? limit ? offset ?";
+                "where iparty_id = ? limit ? offset ? " +
+                "order by id desc";
             connection.query(select, [req.user.id, limit, offset], function(err, results) {
                 connection.release();
                 if(err) {
