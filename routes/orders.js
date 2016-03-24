@@ -161,10 +161,10 @@ router.post('/', isLoggedIn, function(req, res, next) {
                         var care = req.body.care;
 
                         //sqlAes.set(connection, serverKey);
-                        var insert =  "insert into orders(iparty_id, date, receiver, phone, addphone, adcode, address, care) "+
+                        var insert =  "insert into orders(adcode, iparty_id, date, receiver, phone, addphone, address, care) "+
                                       //"values(?, date(now()), ?, ?, ?, ?, ?, ?)";
-                                      "values(?, date(now()), " +
-                                      sqlAes.encrypt(6)
+                                      "values(?, ?, now(), " +
+                                      sqlAes.encrypt(5)
                                       //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
                                       //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
                                       //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
@@ -172,7 +172,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                                       //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
                                       //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + "))" +
                                        + ")";
-                        connection.query(insert, [req.user.id, name, phone1, phone2, adcode, address, care], function(err, result) {
+                        connection.query(insert, [adcode, req.user.id, name, phone1, phone2, address, care], function(err, result) {
                             if(err) {
                                 connection.rollback();
                                 connection.release();
