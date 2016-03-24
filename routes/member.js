@@ -560,8 +560,8 @@ router.put('/me/baskets', function(req, res, next) {
 
 });
 
-router.delete('/me/baskets/:itemid', isLoggedIn, function(req, res, next) {
-    var itemid = req.params.itemid;
+router.delete('/me/baskets/:itemId', isLoggedIn, function(req, res, next) {
+    var itemid = req.params.itemId;
 
     function getConnection(callback) {
         pool.getConnection(function(err, connection) {
