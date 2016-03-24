@@ -440,7 +440,9 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
           }
           next(err);
         } else {
-          res.json("수정이 완료되었습니다.(emptyupdate)");
+          res.json({
+            "message" : "수정이 완료되었습니다.(emptyupdate)"
+          });
         }
       });
 
@@ -470,7 +472,9 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
           };
           next(err);
         } else {
-          res.json("수정이 완료되었습니다.(bgupdate)");
+          res.json({
+            "message" : "수정이 완료되었습니다.(bgupdate)"
+          });
         }
       })
 
@@ -619,7 +623,9 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
         logger.log('error', err);
         next(err);
       } else {
-        res.json("수정이 완료되었습니다.(updateMystory)");
+        res.json({
+          "message" : "수정이 완료되었습니다.(updateMystory)"
+        });
       }
     });
   }
