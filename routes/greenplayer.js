@@ -68,7 +68,7 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err015",
+                "code" : "err018",
                 "message" : "GREEN PLAYER 목록을 불러올 수 없습니다."
             }
             next(err);
@@ -116,7 +116,7 @@ router.get('/:greenplayerId', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err016",
+                "code" : "err019",
                 "message" : "GREEN PLAYER 상세를 불러올 수 없습니다."
             }
             next(err);
@@ -266,7 +266,7 @@ router.post('/', isLoggedIn, function(req, res, next){
             if(err){
                 logger.log('warn', '나뭇잎 적립 도중 오류');
                 var err = {
-                    "code" : "err017-1",
+                    "code" : "err020-1",
                     "message" : "메시지는 전송받았으나 나뭇잎 적립 도중 오류가 발생했습니다."
                 }
                 next(err);
@@ -289,7 +289,7 @@ router.post('/', isLoggedIn, function(req, res, next){
     } else {
         logger.log('info', 'watch에 1넣어서 전송하지 않음');
         var err = {
-            "code" : "err017",
+            "code" : "err020",
             "message" : "오늘의 나뭇잎 충전량을 초과하였습니다."
         }
         next(err);
