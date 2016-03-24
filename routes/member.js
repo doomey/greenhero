@@ -597,7 +597,6 @@ router.delete('/me/baskets/:itemId', isLoggedIn, function(req, res, next) {
             res.json(message);
         }
     });
-})
-
+});
 
 module.exports = router;
