@@ -162,15 +162,8 @@ router.post('/', isLoggedIn, function(req, res, next) {
 
                         //sqlAes.set(connection, serverKey);
                         var insert =  "insert into orders(adcode, iparty_id, date, receiver, phone, addphone, address, care) "+
-                                      //"values(?, date(now()), ?, ?, ?, ?, ?, ?)";
                                       "values(?, ?, now(), " +
                                       sqlAes.encrypt(5)
-                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                                      //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + "))" +
                                        + ")";
                         connection.query(insert, [adcode, req.user.id, name, phone1, phone2, address, care], function(err, result) {
                             if(err) {
@@ -254,7 +247,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
             }
             async.waterfall([getConnection, selectIparty, doTransaction], function(err, message) {
                 if(err) {
-                    err.code = "err015";
+                    err.code = "err023";
                     err.message = "주문실패. 목록을 불러올 수 없습니다.";
                     logger.log('error', err);
                     next(err);
@@ -302,11 +295,6 @@ router.post('/setaddress', isLoggedIn, function(req, res, next) {
                         var insert =  "insert into daddress(ad_code, iparty_id, name, receiver, phone, add_phone, address) "+
                            "values(?, ?, " +
                            sqlAes.encrypt(5)
-                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
-                               //"aes_encrypt(?, unhex(" + connection.escape(serverKey) + ")), " +
                            + ")";
                         connection.query(insert, [adcode, req.user.id, req.user.name, name, phone1, phone2, address], function(err, result) {
                             connection.release();
@@ -349,7 +337,7 @@ router.post('/setaddress', isLoggedIn, function(req, res, next) {
         }
         async.waterfall([getConnection, insertDaddress], function(err, message) {
             if(err) {
-                err.code = "err016";
+                err.code = "err024";
                 err.message = "주소 등록에 실패하였습니다...";
                 logger.log('error', err);
                 next(err);
@@ -419,7 +407,7 @@ router.get('/getaddress', isLoggedIn, function(req, res, next) {
 
         async.waterfall([getConnection, selectDaddress], function(err, message) {
             if(err) {
-                err.code = "err017";
+                err.code = "err025";
                 err.message = "주소 불러오기에 실패하였습니다...";
                 logger.log('error', err);
                 next(err);
