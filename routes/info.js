@@ -60,7 +60,7 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectArticles], function(err, result){
         if(err){
             var err = {
-                "code" : "err026",
+                "code" : "err027",
                 "message" : "운영정보 목록 불러오기를 실패하였습니다."
             };
             logger.log('error', '운영정보 목록보기 에러 : ' + err);
@@ -101,7 +101,7 @@ router.get('/:infoId', function(req, res, next){
     async.waterfall([getConnection, selectArticle], function(err, result) {
         if(err){
             var err = {
-                "code" : "err027",
+                "code" : "err028",
                 "message" : "운영정보 상세 불러오기를 실패하였습니다."
             };
             logger.log('error', '운영정보 상세보기 에러 : ' + err);
