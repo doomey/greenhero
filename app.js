@@ -13,19 +13,13 @@ require('./config/passportconfig')(passport); //passport를 configuration
 
 
 
-var accessterms = require('./routes/accessterms');
+
 var sympathy = require('./routes/sympathy');
-var faqs = require('./routes/faqs');
+
 var greenplayer = require('./routes/greenplayer');
 var greenspace = require('./routes/greenspace');
 // 중요!!! Loading router-level middleware modules 라우터 레벨 미들웨어 모듈을 로딩한다.
 
-
-
-var notices = require('./routes/notices');
-
-
-var policies = require('./routes/policies');
 
 
 //Green Space 라우팅 모듈 로딩
@@ -45,6 +39,7 @@ var receipt = require('./routes/receipt');
 
 var mystory = require('./routes/mystory');
 
+var info = require('./routes/info');
 
 var app = express();
 
@@ -79,11 +74,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 // 중요!!! mapping mount point configuration. 마운트 포인트를 구성하면 된다.
 
-//공지사항, FAQ, 이용약관, 운영정책 라우팅 모듈을 특정 라우팅 경로에 등록
-app.use('/notices', notices);
-app.use('/faqs', faqs);
-app.use('/accessterms', accessterms);
-app.use('/policies', policies);
 
 //Green space 라우팅 모듈을 특정 라우팅 경로에 등록
 app.use('/greenspaces', greenspace);
@@ -103,6 +93,8 @@ app.use('/sympathy', sympathy);
 
 
 app.use('/mystories', mystory);
+
+app.use('/info', info);
 
 //로컬
 app.use('/local', local);
