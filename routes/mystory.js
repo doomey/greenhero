@@ -15,7 +15,7 @@ var a;
 var data = [];
 
 
-//todo 1: 글 제목, 내용, 파일, 배경을 받아온다.
+//글 제목, 내용, 파일, 배경을 받아온다.
 
 
 function getConnection(callback) {
@@ -70,7 +70,7 @@ router.get('/', isLoggedIn, function (req, res, next) {
   async.waterfall([getConnection, selectMystories], function (err, results) {
     if (err) {
       var err = {
-        "code": "err011",
+        "code": "err014",
         "message": "MYSTORY를 불러올 수 없습니다."
       };
       logger.log('error', err);
@@ -108,9 +108,6 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
       "e.content as content, p.photourl as photoUrl " +
       "FROM e_diary e join (select id, nickname from iparty) i " +
       "on(e.iparty_id = i.id) " +
-        //"left join (select ediary_id, count(ediary_id) as rAmount " +
-        //           "from reply group by ediary_id) r " +
-        //"on (e.id = r.ediary_id) " +
       "left join (select refer_id, photourl from photos where refer_type = 1) p " +
       "on (e.id = p.refer_id) " +
       "left join (select refer_id, photourl from photos where refer_type = 4) b " +
@@ -130,16 +127,16 @@ router.get('/:ediaryId', isLoggedIn, function (req, res, next) {
     var list;
     if (err) {
       var err = {
-        "code": "err011",
-        "message": "MYSTORY를 불러올 수 없습니다."
+        "code": "err016",
+        "message": "MYSTORY 상세를 불러올 수 없습니다."
       };
       logger.log('error', err);
       next(err);
     } else {
       if (results.length === 0) {
         var err = {
-          "code": "err011",
-          "message": "MYSTORY를 불러올 수 없습니다."
+          "code": "err016",
+          "message": "MYSTORY 상세를 불러올 수 없습니다."
         };
         logger.log('error', err);
         next(err);
@@ -199,7 +196,6 @@ router.post('/', isLoggedIn, function (req, res, next) {
       form.parse(req, function (err, fields, files) {
         var file = files['photo'];
         logger.log('debug', '필즈 값 : ' + fields + ', 파일은 : ' + file);
-        //console.log('필즈 값 : ' + fields + ', 파일은 : ' + file);
 
         var mimeType = mime.lookup(path.basename(file.path));
         var s3 = new AWS.S3({
@@ -300,10 +296,6 @@ router.post('/', isLoggedIn, function (req, res, next) {
             callback(err);
           } else {
             if (tLeaf >= 15) {
-              //connection.release();
-              //var err = {"message": "오늘의 나뭇잎 충전량을 초과하였습니다."};
-              //next(err);
-              //callback(null, result);
               exceed = 1;
               callback(null);
             } else {
@@ -388,7 +380,7 @@ router.post('/', isLoggedIn, function (req, res, next) {
   async.waterfall([getConnection, writeMystory, saveLeaf], function (err, results) {
     if (err) {
       var err = {
-        "code": "err011",
+        "code": "err015",
         "message": "MYSTORY를 작성할 수 없습니다."
       };
       logger.log('error', err);
@@ -440,8 +432,8 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
       async.waterfall([getConnection, emptyUpdate], function (err, results) {
         if (err) {
           var err = {
-            "code": "err012",
-            "message": "Mystory를 수정할 수 없습니다."
+            "code": "err017",
+            "message": "MY STOTY를 수정할 수 없습니다."
           }
           next(err);
         } else {
@@ -468,8 +460,8 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
       async.waterfall([getConnection, bgUpdate], function (err, results) {
         if (err) {
           var err = {
-            "code": "err012",
-            "message": "Mystory를 수정할 수 없습니다."
+            "code": "err017",
+            "message": "MY STORY를 수정할 수 없습니다."
           };
           next(err);
         } else {
@@ -588,8 +580,8 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
     async.waterfall([getConnection, deleteS3Photo, updateMystory], function (err, results) {
       if (err) {
         var err = {
-          "code": "err012",
-          "message": "Mystory를 수정할 수 없습니다."
+          "code": "err017",
+          "message": "MY STORY를 수정할 수 없습니다."
         };
         logger.log('error', err);
         next(err);
