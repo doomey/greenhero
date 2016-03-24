@@ -203,10 +203,15 @@ router.post('/', isLoggedIn, function(req, res, next){
                             connection.release();
                             callback(err);
                         } else {
-                            var sql = "select sum(changedamount) as tLeaf " +
-                                "from leafhistory " +
-                                "where iparty_id = ?";
-                            connection.query(sql, [iparty_id], function (err, result) {
+                            var sql = "select ifnull((a.gained - b.used), 0) as tLeaf " +
+                                      "from (select ifnull(sum(changedamount), 0) as gained, i.id " +
+                                      "      from leafhistory h right join iparty i on (h.iparty_id = i.id) " +
+                                      "      where leaftype != 0 and iparty_id = ?) a " +
+                                      "join (select ifnull(sum(changedamount), 0) as used, i.id " +
+                                      "      from leafhistory h right join iparty i on (h.iparty_id = i.id) " +
+                                      "      where leaftype = 0 and iparty_id = ?) b " +
+                                      "on (a.id = b.id)";
+                            connection.query(sql, [iparty_id, iparty_id], function (err, result) {
                                 if (err) {
                                     connection.release();
                                     callback(err);
