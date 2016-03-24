@@ -575,7 +575,7 @@ router.delete('/me/baskets/:itemId', isLoggedIn, function(req, res, next) {
 
     function deleteCart(connection, callback) {
         var deletequery = "delete from cart " +
-           "where id = ? and iparty_id = ?";
+           "where greenitems_id = ? and iparty_id = ?";
         connection.query(deletequery, [itemid, req.user.id], function (err, result) {
             connection.release();
             if (err) {
