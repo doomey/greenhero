@@ -588,6 +588,7 @@ router.delete('/me/baskets/:itemid', isLoggedIn, function(req, res, next) {
 
     async.waterfall([getConnection, deleteCart], function(err, message) {
         if(err) {
+            err.code = "err029";
             err.message = "장바구니에서 상품을 삭제하지 못했습니다.";
             logger.log('error', req.user.nickname+"님이 장바구니에서 "+ itemid + "번 상품을 삭제하지 못했습니다.");
             next(err);
