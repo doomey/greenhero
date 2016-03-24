@@ -472,6 +472,7 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
     }
   } else {
     function deleteS3Photo(connection, callback) {
+      var flag;
       var sql = "select modifiedfilename " +
         "from photos " +
         "where refer_type = 1 and refer_id = ?";
@@ -481,7 +482,8 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
           callback(err);
         } else if (results.length === 0) {
           logger.log('info', "사진이 존재하지 않습니다.");
-          callback(null, connection);
+          flag = 0;
+          callback(null, connection, flag);
         } else {
           logger.log('info', '수정할 파일명: ' + results[0].modifiedfilename);
           var s3 = new AWS.S3({
@@ -499,14 +501,15 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
               logger.log('error', err, err.stack);
             } else {
               logger.log('info', data);
-              callback(null, connection);
+              flag = 1;
+              callback(null, connection, flag);
             }
           });
         }
       })
     }
 
-    function updateMystory(connection, callback) {
+    function updateMystory(connection, flag, callback) {
       var form = new formidable.IncomingForm();
       form.uploadDir = path.join(__dirname, '../uploads');
       form.keepExtensions = true;
@@ -555,21 +558,41 @@ router.put('/:ediaryId', isLoggedIn, function (req, res, next) {
                   connection.release();
                   callback(err);
                 } else {
-                  var sql2 = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) " +
-                             "values(?, now(), ?, ?, ?, 1, ?)";
-                  connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
-                    if (err) {
-                      connection.rollback();
-                      connection.release();
-                      callback(err);
-                    } else {
-                      connection.commit();
-                      connection.release();
-                      var photoId = result.insertId;
-                      logger.log("생성된 사진 번호 : " + photoId);
-                      callback(null, connection);
-                    }
-                  });
+                  console.log("플래그!!!!!!!! : " + flag)
+                  if (flag === 0) {
+                    var sql2 = "insert into photos(photourl, uploaddate, originalfilename, modifiedfilename, phototype, refer_type, refer_id) " +
+                      "values(?, now(), ?, ?, ?, 1, ?)";
+                    connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
+                      if (err) {
+                        connection.rollback();
+                        connection.release();
+                        callback(err);
+                      } else {
+                        connection.commit();
+                        connection.release();
+                        var photoId = result.insertId;
+                        logger.log("생성된 사진 번호 : " + photoId);
+                        callback(null, connection);
+                      }
+                    });
+                  } else {
+                    var sql2 = "update photos " +
+                      "set photourl = ?, uploaddate = now(), originalfilename = ?, modifiedfilename = ?, photoType = ? " +
+                      "where refer_type = 1 and refer_id = ?";
+                    connection.query(sql2, [location, originalFilename, modifiedFilename, photoType, ediary_id], function (err, result) {
+                      if (err) {
+                        connection.rollback();
+                        connection.release();
+                        callback(err);
+                      } else {
+                        connection.commit();
+                        connection.release();
+                        var photoId = result.insertId;
+                        logger.log("수정된 사진 번호 : " + photoId);
+                        callback(null, connection);
+                      }
+                    });
+                  }
                 }
               });
             }
