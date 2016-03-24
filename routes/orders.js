@@ -198,7 +198,7 @@ router.post('/', isLoggedIn, function(req, res, next) {
                     //3. orderdetails테이블에 물품id별로 insert
                     function insertOrderdetails(message, orderId, TP, callback) {
                         var index = 0;
-                        async.each(iid, function (element, cb) {
+                        async.eachSeries(iid, function (element, cb) {
                             var insert = "insert into orderdetails(order_id, quantity, greenitems_id) " +
                                 "values(?, ?, ?)";
                             connection.query(insert, [orderId, qt[index], element], function (err) {
