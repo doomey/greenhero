@@ -60,7 +60,7 @@ router.get('/', function(req, res, next){
     async.waterfall([getConnection, selectItems], function(err, result){
         if(err){
             var err = {
-                "code" : "err018",
+                "code" : "err021",
                 "message" : "GREEN SHOP의 물건 목록들을 불러올 수 없습니다."
             };
             logger.log('error', err);
@@ -121,7 +121,7 @@ router.get('/:itemsId', function(req, res, next){
     async.waterfall([getConnection, selectItems], function(err, result){
         if(err){
             var err = {
-                "code" : "err019",
+                "code" : "err022",
                 "message" : "GREEN SHOP의 물건 상세들을 불러올 수 없습니다."
             };
             logger.log('error', err);
