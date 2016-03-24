@@ -184,21 +184,6 @@ router.get('/me', isLoggedIn, function(req, res, next) {
             });
         }
 
-        //function selectLeafhistory(message, connection, callback) {
-        //    var select = "select sum(changedamount) as chdamt "+
-        //                 "from leafhistory "+
-        //                 "where leaftype = 1 and iparty_id = ? and applydate = date(now())";
-        //    connection.query(select, [req.user.id], function(err, results) {
-        //        connection.release();
-        //        if(err) {
-        //            callback(err);
-        //        } else {
-        //            message.result.todayLeaf = (todayleaf - (isNaN(results[0].chdamt)?0:results[0].chdamt));
-        //            callback(null, message);
-        //        }
-        //    });
-        //}
-
         async.waterfall([getConnection, selectLeaf, selectIparty, controlLeafPhoto, selectDaddress], function(err, message) {
             if(err) {
                 err.code = "err002";
@@ -404,7 +389,7 @@ router.get('/me/baskets', isLoggedIn, function(req, res, next) {
     }
     async.waterfall([getConnection, selectCartAndGreenitems], function(err, result) {
         if(err) {
-            err.code = "err023";
+            err.code = "err005";
             err.message = "장바구니를 사용할 수 없습니다...";
             logger.log('error', err);
             next(err);
@@ -469,7 +454,7 @@ router.post('/me/baskets', isLoggedIn, function(req, res, next) {
 
     async.waterfall([getConnection, insertCart], function(err, result) {
         if(err) {
-            err.code = "err024";
+            err.code = "err006";
             err.message = "장바구니에 물건 추가를 실패하였습니다...";
             logger.log('error', err);
             next(err);
@@ -557,7 +542,7 @@ router.put('/me/baskets', function(req, res, next) {
 
     async.waterfall([getConnection, updateOrDeleteCart], function (err, result) {
         if (err) {
-            err.code = "err025";
+            err.code = "err007";
             err.message = "장바구니에 있는 물품 수정에 실패하였습니다...";
             logger.log('error', err);
             next(err);
